@@ -6,6 +6,7 @@ import {
   getDocs,
   updateDoc,
   setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 const Habits = () => {
@@ -53,12 +54,15 @@ const Habits = () => {
 
   const deleteHabit = async (id: string) => {
     if (!user) return;
-    await updateDoc(doc(db, "users", user.uid, "habits", id), {
-      active: false,
-      modifiedAt: new Date(),
-    });
-    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "habits", id));
+      console.log(`Deleted habit with ID: ${id}`);
+      // Optionally refresh snapshot to ensure consistency
+      const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    } catch (error) {
+      console.error("Error deleting habit:", error);
+    }
   };
 
   return (
@@ -80,7 +84,7 @@ const Habits = () => {
 
       <ul className="space-y-3">
         {habits.map((habit) => (
-          <li key={habit.id} className={`flex justify-between items-center p-4 border rounded ${!habit.active ? "opacity-50" : ""}`}>
+          <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
             {editingId === habit.id ? (
               <div className="flex gap-2 w-full">
                 <input
@@ -96,14 +100,12 @@ const Habits = () => {
               <>
                 <span>{habit.name}</span>
                 <div className="space-x-3">
-                  <button onClick={() => { setEditingId(habit.id); setEditText(habit.name); }} className="text-blue-600 hover:underline">
+                  <button onClick={() => { setEditingId(habit.id); setEditText(habit.name); }} className="text-blue-600">
                     Edit
                   </button>
-                  {habit.active && (
-                    <button onClick={() => deleteHabit(habit.id)} className="text-red-600 hover:underline">
-                      Remove
-                    </button>
-                  )}
+                  <button onClick={() => deleteHabit(habit.id)} className="text-red-600">
+                    Remove
+                  </button>
                 </div>
               </>
             )}

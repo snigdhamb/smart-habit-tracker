@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { auth } from "./firebase/firebase";
+import { db, auth } from "./firebase/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { getHabitsForToday } from "./services/getHabitsForToday";
 import { markHabitComplete } from "./services/markHabitComplete";
 import { format } from "date-fns";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
-import HabitsPage from "./components/HabitsPage";
+import Habits from "./pages/Habits";
 import { useNavigate } from "react-router-dom";
 import { SignOutButton, SignInButton } from "./components/AuthButtons";
+import {
+  collection,
+  doc,
+  getDocs,
+} from "firebase/firestore";
 
 const App = () => {
   const [habits, setHabits] = useState<{ id: string; name: string }[]>([]);
@@ -22,6 +27,7 @@ const App = () => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
+    
     return () => unsubscribe();
   }, []);
 
@@ -124,27 +130,20 @@ const App = () => {
                 </div>
 
                 {/* Today's Habits */}
-                <div className="mb-12">
-                  <h2 className="text-2xl font-semibold text-[#10443c] mb-5">Today’s Habits</h2>
-                  <ul className="space-y-3 text-lg font-semibold">
-                    {habits.map((habit) => (
-                      <li key={habit.id} className="flex items-center space-x-3">
-                        <input
-                          type="checkbox"
-                          onChange={() => handleToggle(habit.id)}
-                          checked={completed.includes(habit.id)}
-                          className="w-5 h-5 accent-[#2ab9a3]"
-                        />
-                        <span className="text-[#174b91]">{habit.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <ul className="space-y-3">
+                  {habits.map((habit) => (
+                    <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
+                        <>
+                          <span>{habit.name}</span>
+                        </>
+                    </li>
+                  ))}
+                </ul>
               </>
             }
           />
           <Route path="/progress" element={<div>Progress Page</div>} />
-          <Route path="/habits" element={<HabitsPage />} />
+          <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<div>Settings Page</div>} />
         </Routes>
       </div>
