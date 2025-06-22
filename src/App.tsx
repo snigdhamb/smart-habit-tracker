@@ -4,7 +4,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { getHabitsForToday } from "./services/getHabitsForToday";
 import { markHabitComplete } from "./services/markHabitComplete";
 import { format } from "date-fns";
-import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import Habits from "./pages/Habits";
 import { useNavigate } from "react-router-dom";
 import { SignOutButton, SignInButton } from "./components/AuthButtons";
@@ -22,6 +22,7 @@ const App = () => {
   const today = format(new Date(), "yyyy-MM-dd");
 
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -32,12 +33,12 @@ const App = () => {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || location.pathname !== "/") return;
     (async () => {
       const data = await getHabitsForToday(user.uid);
       setHabits(data as any);
     })();
-  }, [user]);
+  }, [user, location]);
 
   const handleToggle = async (habitId: string) => {
     if (!user) return;
