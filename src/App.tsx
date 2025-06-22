@@ -1,20 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { auth } from "./firebase/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
 import { getHabitsForToday } from "./services/getHabitsForToday";
 import { markHabitComplete } from "./services/markHabitComplete";
 import { format } from "date-fns";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import HabitsPage from "./components/HabitsPage";
 import { useNavigate } from "react-router-dom";
+import { SignOutButton, SignInButton } from "./components/AuthButtons";
 
 const App = () => {
   const [habits, setHabits] = useState<{ id: string; name: string }[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
+  const [user, setUser] = useState<User | null>(null);
 
-  const user = auth.currentUser;
   const today = format(new Date(), "yyyy-MM-dd");
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -31,6 +40,15 @@ const App = () => {
     await markHabitComplete(user.uid, today, habitId);
   };
 
+  if (!user) {
+    return (
+      <div className="p-8">
+        <h1 className="text-2xl font-bold mb-4">Smart Track</h1>
+        <SignInButton />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen font-sans bg-[#fdfcfb]">
       {/* Sidebar */}
@@ -43,18 +61,6 @@ const App = () => {
             <span className="text-2xl font-semibold">Habit Tracker</span>
           </div>
           <nav className="space-y-5">
-            {/* <button className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105">
-              <span className="text-lg">🏠</span>
-              <span>Home</span>
-            </button>
-            <button className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105">
-              <span className="text-lg">📊</span>
-              <span>Progress</span>
-            </button>
-            <button className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105">
-              <span className="text-lg">⚙️</span>
-              <span>Settings</span>
-            </button> */}
             <button
               onClick={() => navigate("/")}
               className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105"
@@ -69,6 +75,14 @@ const App = () => {
             >
               <span className="text-lg">📊</span>
               <span>Progress</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/habits")}
+              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
+            >
+              <span className="text-lg">📋</span>
+              <span>Habits</span>
             </button>
 
             <button
@@ -96,14 +110,14 @@ const App = () => {
                     <a href="#" className="hover:underline">About</a>
                     <a href="#" className="hover:underline">Contact</a>
                   </div>
-                  <button className="bg-[#2ab9a3] text-white px-6 py-3 rounded-md font-semibold tracking-wide hover:brightness-110 transition">
-                    Log Out
-                  </button>
+                  <SignOutButton />
                 </div>
 
                 {/* Header section */}
                 <div className="max-w-3xl">
-                  <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">Track Your Habits</h1>
+                  <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">
+                    Welcome, {user?.displayName?.split(" ")[0] || "User"}
+                  </h1>
                   <p className="text-gray-700 mb-8 leading-tight">
                     Stay on top of your goals. Check off habits as you complete them!
                   </p>
@@ -130,6 +144,7 @@ const App = () => {
             }
           />
           <Route path="/progress" element={<div>Progress Page</div>} />
+          <Route path="/habits" element={<HabitsPage />} />
           <Route path="/settings" element={<div>Settings Page</div>} />
         </Routes>
       </div>

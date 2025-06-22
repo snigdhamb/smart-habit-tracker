@@ -28,15 +28,15 @@ const Habits = () => {
   const addHabit = async () => {
     if (!user || !habitName.trim()) return;
     const newId = habitName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
-    await setDoc(doc(db, "users", user.uid, "habits", newId), {
+    const newHabit = {
       name: habitName.trim(),
       active: true,
       createdAt: new Date(),
       modifiedAt: new Date(),
-    });
+    };
+    await setDoc(doc(db, "users", user.uid, "habits", newId), newHabit);
     setHabitName("");
-    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
   };
 
   const updateHabit = async (id: string) => {
