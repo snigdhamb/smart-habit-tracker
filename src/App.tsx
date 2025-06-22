@@ -5,6 +5,7 @@ import { markHabitComplete } from "./services/markHabitComplete";
 import { format } from "date-fns";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import HabitsPage from "./components/HabitsPage";
+import { useNavigate } from "react-router-dom";
 
 const App = () => {
   const [habits, setHabits] = useState<{ id: string; name: string }[]>([]);
@@ -12,6 +13,8 @@ const App = () => {
 
   const user = auth.currentUser;
   const today = format(new Date(), "yyyy-MM-dd");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +43,7 @@ const App = () => {
             <span className="text-2xl font-semibold">Habit Tracker</span>
           </div>
           <nav className="space-y-5">
-            <button className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105">
+            {/* <button className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105">
               <span className="text-lg">🏠</span>
               <span>Home</span>
             </button>
@@ -51,6 +54,29 @@ const App = () => {
             <button className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105">
               <span className="text-lg">⚙️</span>
               <span>Settings</span>
+            </button> */}
+            <button
+              onClick={() => navigate("/")}
+              className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105"
+            >
+              <span className="text-lg">🏠</span>
+              <span>Home</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/progress")}
+              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
+            >
+              <span className="text-lg">📊</span>
+              <span>Progress</span>
+            </button>
+
+            <button
+              onClick={() => navigate("/settings")}
+              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
+            >
+              <span className="text-lg">⚙️</span>
+              <span>Settings</span>
             </button>
           </nav>
         </div>
@@ -58,43 +84,54 @@ const App = () => {
 
       {/* Main content */}
       <div className="flex-1 p-12">
-        {/* Top nav */}
-        <div className="flex justify-between items-center mb-12">
-          <div className="flex space-x-10 text-[#174b91] font-medium tracking-wide">
-            <a href="#" className="hover:underline">Home</a>
-            <a href="#" className="hover:underline">About</a>
-            <a href="#" className="hover:underline">Contact</a>
-          </div>
-          <button className="bg-[#2ab9a3] text-white px-6 py-3 rounded-md font-semibold tracking-wide hover:brightness-110 transition">
-            Log Out
-          </button>
-        </div>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                {/* Top nav */}
+                <div className="flex justify-between items-center mb-12">
+                  <div className="flex space-x-10 text-[#174b91] font-medium tracking-wide">
+                    <a href="#" className="hover:underline">Home</a>
+                    <a href="#" className="hover:underline">About</a>
+                    <a href="#" className="hover:underline">Contact</a>
+                  </div>
+                  <button className="bg-[#2ab9a3] text-white px-6 py-3 rounded-md font-semibold tracking-wide hover:brightness-110 transition">
+                    Log Out
+                  </button>
+                </div>
 
-        {/* Header section */}
-        <div className="max-w-3xl">
-          <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">Track Your Habits</h1>
-          <p className="text-gray-700 mb-8 leading-tight">
-            Stay on top of your goals. Check off habits as you complete them!
-          </p>
-        </div>
+                {/* Header section */}
+                <div className="max-w-3xl">
+                  <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">Track Your Habits</h1>
+                  <p className="text-gray-700 mb-8 leading-tight">
+                    Stay on top of your goals. Check off habits as you complete them!
+                  </p>
+                </div>
 
-        {/* Today's Habits */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-semibold text-[#10443c] mb-5">Today’s Habits</h2>
-          <ul className="space-y-3 text-lg font-semibold">
-            {habits.map((habit) => (
-              <li key={habit.id} className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  onChange={() => handleToggle(habit.id)}
-                  checked={completed.includes(habit.id)}
-                  className="w-5 h-5 accent-[#2ab9a3]"
-                />
-                <span className="text-[#174b91]">{habit.name}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+                {/* Today's Habits */}
+                <div className="mb-12">
+                  <h2 className="text-2xl font-semibold text-[#10443c] mb-5">Today’s Habits</h2>
+                  <ul className="space-y-3 text-lg font-semibold">
+                    {habits.map((habit) => (
+                      <li key={habit.id} className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          onChange={() => handleToggle(habit.id)}
+                          checked={completed.includes(habit.id)}
+                          className="w-5 h-5 accent-[#2ab9a3]"
+                        />
+                        <span className="text-[#174b91]">{habit.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </>
+            }
+          />
+          <Route path="/progress" element={<div>Progress Page</div>} />
+          <Route path="/settings" element={<div>Settings Page</div>} />
+        </Routes>
       </div>
     </div>
   );
