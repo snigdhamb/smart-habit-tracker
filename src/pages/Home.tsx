@@ -12,18 +12,24 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Smart Habit Tracker</h1>
-
-      {user ? (
-        <div>
-          <p className="mb-2">Welcome, {user.displayName}</p>
-          <img src={user.photoURL ?? ''} alt="User" className="w-12 h-12 rounded-full mb-4" />
-          <SignOutButton />
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-blue-800 text-white px-6 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold">Habit Tracker</h1>
+        <div className="space-x-6">
+          <a href="#" className="hover:underline">Home</a>
+          <a href="#" className="hover:underline">About</a>
+          <a href="#" className="hover:underline">Contact</a>
         </div>
-      ) : (
-        <SignInButton />
-      )}
+        {user ? <SignOutButton /> : <SignInButton />}
+      </nav>
+      <main className="flex justify-center items-center h-[calc(100vh-64px)]">
+        {user ? (
+          <div className="text-center">
+            <p className="mb-2 text-lg">Welcome, {user.displayName}</p>
+            <img src={user.photoURL ?? ''} alt="User" className="w-16 h-16 rounded-full mb-4 mx-auto" />
+          </div>
+        ) : null}
+      </main>
     </div>
   );
 };
