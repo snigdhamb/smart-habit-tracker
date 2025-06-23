@@ -9,9 +9,17 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
+interface Habit {
+  id: string;
+  name: string;
+  complete: boolean;
+  createdAt: Date;
+  modifiedAt?: Date;
+}
+
 const Habits = () => {
   const [habitName, setHabitName] = useState("");
-  const [habits, setHabits] = useState<any[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
 
@@ -28,7 +36,16 @@ const Habits = () => {
       const tomorrow = new Date(todayDate);
       tomorrow.setDate(todayDate.getDate() + 1);
       const filtered = snapshot.docs
-        .map(doc => ({ id: doc.id, ...(doc.data() as { createdAt: any }) }))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            complete: data.complete,
+            createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+            modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+          };
+        })
         .filter(habit => {
           const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
           return (
@@ -48,6 +65,7 @@ const Habits = () => {
     const newHabit = {
       name: habitName.trim(),
       active: true,
+      complete: false,
       createdAt: new Date(),
       modifiedAt: new Date(),
     };
@@ -65,7 +83,30 @@ const Habits = () => {
     setEditingId(null);
     setEditText("");
     const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(todayDate);
+      tomorrow.setDate(todayDate.getDate() + 1);
+      const filtered = snapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            complete: data.complete,
+            createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+            modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+          };
+        })
+        .filter(habit => {
+          const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
+          return (
+            habitDate.getFullYear() === todayDate.getFullYear() &&
+            habitDate.getMonth() === todayDate.getMonth() &&
+            habitDate.getDate() === todayDate.getDate()
+          );
+        });
+      setHabits(filtered);
   };
 
   const deleteHabit = async (id: string) => {
@@ -75,7 +116,31 @@ const Habits = () => {
       console.log(`Deleted habit with ID: ${id}`);
       // Optionally refresh snapshot to ensure consistency
       const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-      setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(todayDate);
+      tomorrow.setDate(todayDate.getDate() + 1);
+      const filtered = snapshot.docs
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            complete: data.complete,
+            createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+            modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+          };
+        })
+        .filter(habit => {
+          const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
+          return (
+            habitDate.getFullYear() === todayDate.getFullYear() &&
+            habitDate.getMonth() === todayDate.getMonth() &&
+            habitDate.getDate() === todayDate.getDate()
+          );
+        });
+      setHabits(filtered);
+      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     } catch (error) {
       console.error("Error deleting habit:", error);
     }

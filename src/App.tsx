@@ -1,9 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { db, auth } from "./firebase/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { getHabitsForToday } from "./services/getHabitsForToday";
-import { markHabitComplete } from "./services/markHabitComplete";
-import { format } from "date-fns";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import Habits from "./pages/Habits";
 import { useNavigate } from "react-router-dom";
@@ -13,17 +10,20 @@ import {
   doc,
   getDocs,
   updateDoc,
-  setDoc,
-  deleteDoc,
 } from "firebase/firestore";
 
+interface Habit {
+  id: string;
+  name: string;
+  complete: boolean;
+  createdAt: Date;
+  modifiedAt?: Date;
+}
+
+
 const App = () => {
-  const [habits, setHabits] = useState<any[]>([]);
-  const [completed, setCompleted] = useState<string[]>([]);
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [user, setUser] = useState<User | null>(null);
-
-  const today = format(new Date(), "yyyy-MM-dd");
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -38,15 +38,22 @@ const App = () => {
   useEffect(() => {
     if (!user || location.pathname !== "/") return;
     const fetchHabits = async () => {
-      // const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date(todayDate);
       tomorrow.setDate(todayDate.getDate() + 1);
       const filtered = snapshot.docs
-        .map(doc => ({ id: doc.id, ...(doc.data() as { createdAt: any }) }))
+        .map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name,
+            complete: data.complete,
+            createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+            modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+          };
+        })
         .filter(habit => {
           const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
           return (
@@ -67,7 +74,16 @@ const App = () => {
       modifiedAt: new Date(),
     });
     const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setHabits(snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        complete: data.complete,
+        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+        modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+      };
+    }));
   };
 
   const markInComplete = async (id: string) => {
@@ -77,7 +93,16 @@ const App = () => {
       modifiedAt: new Date(),
     });
     const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    setHabits(snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        name: data.name,
+        complete: data.complete,
+        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
+        modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
+      };
+    }));
   };
 
   if (!user) {
