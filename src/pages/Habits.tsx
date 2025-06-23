@@ -20,8 +20,24 @@ const Habits = () => {
   useEffect(() => {
     if (!user) return;
     const fetchHabits = async () => {
+      // const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-      setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(todayDate);
+      tomorrow.setDate(todayDate.getDate() + 1);
+      const filtered = snapshot.docs
+        .map(doc => ({ id: doc.id, ...(doc.data() as { createdAt: any }) }))
+        .filter(habit => {
+          const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
+          return (
+            habitDate.getFullYear() === todayDate.getFullYear() &&
+            habitDate.getMonth() === todayDate.getMonth() &&
+            habitDate.getDate() === todayDate.getDate()
+          );
+        });
+      setHabits(filtered);
     };
     fetchHabits();
   }, [user]);

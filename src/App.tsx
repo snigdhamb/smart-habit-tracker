@@ -12,10 +12,13 @@ import {
   collection,
   doc,
   getDocs,
+  updateDoc,
+  setDoc,
+  deleteDoc,
 } from "firebase/firestore";
 
 const App = () => {
-  const [habits, setHabits] = useState<{ id: string; name: string }[]>([]);
+  const [habits, setHabits] = useState<any[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
@@ -34,17 +37,47 @@ const App = () => {
 
   useEffect(() => {
     if (!user || location.pathname !== "/") return;
-    (async () => {
-      const data = await getHabitsForToday(user.uid);
-      setHabits(data as any);
-    })();
+    const fetchHabits = async () => {
+      // const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(todayDate);
+      tomorrow.setDate(todayDate.getDate() + 1);
+      const filtered = snapshot.docs
+        .map(doc => ({ id: doc.id, ...(doc.data() as { createdAt: any }) }))
+        .filter(habit => {
+          const habitDate = habit.createdAt?.toDate?.() || new Date(habit.createdAt);
+          return (
+            habitDate.getFullYear() === todayDate.getFullYear() &&
+            habitDate.getMonth() === todayDate.getMonth() &&
+            habitDate.getDate() === todayDate.getDate()
+          );
+        });
+      setHabits(filtered);
+    };
+    fetchHabits();
   }, [user, location]);
 
-  const handleToggle = async (habitId: string) => {
+  const markComplete = async (id: string) => {
     if (!user) return;
-    const updated = [...completed, habitId];
-    setCompleted(updated);
-    await markHabitComplete(user.uid, today, habitId);
+    await updateDoc(doc(db, "users", user.uid, "habits", id), {
+      complete: true,
+      modifiedAt: new Date(),
+    });
+    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  };
+
+  const markInComplete = async (id: string) => {
+    if (!user) return;
+    await updateDoc(doc(db, "users", user.uid, "habits", id), {
+      complete: false,
+      modifiedAt: new Date(),
+    });
+    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+    setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
   if (!user) {
@@ -134,9 +167,21 @@ const App = () => {
                 <ul className="space-y-3">
                   {habits.map((habit) => (
                     <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
-                        <>
-                          <span>{habit.name}</span>
-                        </>
+                      <span>{habit.name}</span>
+                      <label className="flex items-center space-x-2 text-red-600">
+                        <input
+                          type="checkbox"
+                          checked={habit.complete}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              markComplete(habit.id);
+                            } else {
+                              markInComplete(habit.id);
+                            }
+                          }}
+                        />
+                        {/* <span>Complete</span> */}
+                      </label>
                     </li>
                   ))}
                 </ul>
