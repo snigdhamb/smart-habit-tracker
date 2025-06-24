@@ -3,6 +3,7 @@ import { db, auth } from "./firebase/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
 import Habits from "./pages/Habits";
+import Dashboard from "./pages/Dashboard";
 import { useNavigate } from "react-router-dom";
 import { SignOutButton, SignInButton } from "./components/AuthButtons";
 import {
@@ -135,7 +136,7 @@ const App = () => {
             </button>
 
             <button
-              onClick={() => navigate("/progress")}
+              onClick={() => navigate("/dashboard")}
               className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
             >
               <span className="text-lg">📊</span>
@@ -213,7 +214,7 @@ const App = () => {
               </>
             }
           />
-          <Route path="/progress" element={<div>Progress Page</div>} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<div>Settings Page</div>} />
         </Routes>
