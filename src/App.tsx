@@ -15,6 +15,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import Onboarding from "./pages/Onboarding";
+import GenerateHabits from "./pages/GenerateHabits";
 
 interface Habit {
   id: string;
@@ -275,6 +276,7 @@ const App = () => {
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<div>Settings Page</div>} />
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/generate-habits" element={<GenerateHabits />}/>
         </Routes>
       </div>
     </div>

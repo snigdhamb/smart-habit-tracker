@@ -10,7 +10,7 @@ export default function Onboarding() {
       <p className="mb-8 text-gray-700">Let’s help you start building habits aligned with your goals.</p>
       <button
         className="bg-blue-600 text-white px-6 py-3 rounded w-full mb-4"
-        onClick={() => navigate("/goal-input")}
+        onClick={() => navigate("/generate-habits")}
       >
         Input your goal & pick from suggestions
       </button>
