@@ -5,6 +5,9 @@ import { collection, getDocs } from "firebase/firestore";
 import CalendarHeatmap from 'react-calendar-heatmap';
 import "react-calendar-heatmap/dist/styles.css";
 import { addMonths, subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from 'chart.js';
+ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 interface HabitEntry {
   date: string;
@@ -49,6 +52,47 @@ const Dashboard = () => {
     fetchData();
   }, [userId]);
 
+  // Linechart Stuff
+  const dayTotals = Array(7).fill(0);
+  const dayCompletions = Array(7).fill(0);
+
+  entries.forEach((entry) => {
+    if (filter && entry.habitName !== filter) return;
+    const day = new Date(entry.date).getDay(); // 0 = Sunday, 6 = Saturday
+    dayTotals[day]++;
+    if (entry.complete) dayCompletions[day]++;
+  });
+
+  const weeklyCompletionRates = dayTotals.map((total, idx) =>
+    total === 0 ? 0 : dayCompletions[idx] / total
+  );
+
+  const weeklyChartData = {
+    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    datasets: [
+      {
+        label: '',
+        data: weeklyCompletionRates.map((v) => parseFloat((v * 100).toFixed(1))),
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        tension: 0.3,
+      },
+    ],
+  };
+  
+const chartOptions = {
+  scales: {
+    y: {
+      ticks: {
+        callback: function (value: number | string) {
+          return `${value}%`;
+        },
+      },
+    },
+  },
+};
+
+  // Heatmap Stuff 
   const dateCompletionMap = entries.reduce((acc, entry) => {
     if (filter && !entry.habitName.toLowerCase().includes(filter.toLowerCase())) return acc;
     if (!acc[entry.date]) acc[entry.date] = { total: 0, complete: 0 };
@@ -70,6 +114,26 @@ const Dashboard = () => {
   return (
     <div className="p-8">
       <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
+      {/* Weekly Completion Line Chart */}
+      <div className="mt-6">
+        <div className="flex justify-center">
+          <h3 className="text-lg font-semibold mb-2">This Week's Progress</h3>
+        </div>
+        <Line data={weeklyChartData} options={chartOptions}/>
+      </div>
+      <style>{`
+        .color-empty { fill: #eee; }
+        .color-scale-1 { fill:rgb(255, 169, 175); }
+        .color-scale-2 { fill:rgb(255, 186, 112); }
+        .color-scale-3 { fill:rgb(200, 236, 132); }
+        .color-scale-4 { fill:rgb(100, 194, 134); }
+        .color-scale-5 { fill:rgb(47, 128, 77); }
+      `}</style>
+
+      {/* Heatmap */}
+      <div className="flex justify-center">
+        <h3 className="text-lg font-semibold mb-2">Daily Activity</h3>
+      </div>
       <select
         className="border p-2 mb-4"
         value={filter}
