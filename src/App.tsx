@@ -10,6 +10,8 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
 
@@ -25,12 +27,42 @@ interface Habit {
 const App = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [loginStreak, setLoginStreak] = useState<number>(0);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          const lastLogin = userData.lastLogin?.toDate?.() || new Date(userData.lastLogin);
+          lastLogin.setHours(0, 0, 0, 0);
+          const diff = (today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24);
+          let newStreak = userData.loginStreak || 0;
+          if (diff === 1) {
+            newStreak += 1;
+          } else if (diff > 1) {
+            newStreak = 1;
+          }
+          await updateDoc(userDocRef, {
+            lastLogin: new Date(),
+            loginStreak: newStreak,
+          });
+          setLoginStreak(newStreak);
+        } else {
+          await setDoc(userDocRef, {
+            lastLogin: new Date(),
+            loginStreak: 1,
+          });
+          setLoginStreak(1);
+        }
+      }
     });
     
     return () => unsubscribe();
@@ -184,7 +216,26 @@ const App = () => {
                   <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">
                     Welcome, {user?.displayName?.split(" ")[0] || "User"}
                   </h1>
-                  <p className="text-gray-700 mb-8 leading-tight">
+                  <p className="text-green-700 font-semibold mb-2">🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}</p>
+                  {loginStreak > 0 && loginStreak < 4 && (
+                    <p className="text-blue-700 font-small mb-6 italic">Every streak starts at 0...one day at a time!</p>
+                  )}
+                  {loginStreak >= 4 && loginStreak < 7 && (
+                    <p className="text-blue-700 font-medium mb-6">Killing it! You've been showing up for yourself for almost a week now!</p>
+                  )}
+                  {loginStreak >= 7 && loginStreak < 14 && (
+                    <p className="text-purple-700 font-medium mb-6">Amazing streak! You're on fire and building real momentum!</p>
+                  )}
+                  {loginStreak >= 14 && loginStreak < 21 && (
+                    <p className="text-purple-700 font-medium mb-6">They say it takes 21 days to build a habit...Don't quit now! </p>
+                  )}
+                  {loginStreak >= 21 && loginStreak < 30 && (
+                    <p className="text-orange-700 font-medium mb-6">🏆 You’re unstoppable! Just a few days away from hitting 30!</p>
+                  )}
+                  {loginStreak >= 30 && (
+                    <p className="text-green-800 font-medium mb-6">🌟 30-day legend! You've built a rock-solid habit. Keep the streak alive!</p>
+                  )}
+                  <p className="text-gray-700 mb-2 leading-tight">
                     Stay on top of your goals. Check off habits as you complete them!
                   </p>
                 </div>
