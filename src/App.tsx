@@ -14,6 +14,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
+import Onboarding from "./pages/Onboarding";
 
 interface Habit {
   id: string;
@@ -33,6 +34,7 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      let isNewUser = false;
       setUser(currentUser);
       if (currentUser) {
         const userDocRef = doc(db, "users", currentUser.uid);
@@ -56,12 +58,16 @@ const App = () => {
           });
           setLoginStreak(newStreak);
         } else {
+          isNewUser = true;
           await setDoc(userDocRef, {
             lastLogin: new Date(),
             loginStreak: 1,
           });
           setLoginStreak(1);
         }
+      }
+      if (isNewUser) {
+        navigate("/onboarding");
       }
     });
     
@@ -268,6 +274,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<div>Settings Page</div>} />
+          <Route path="/onboarding" element={<Onboarding />} />
         </Routes>
       </div>
     </div>
