@@ -6,6 +6,11 @@ import Habits from "./pages/Habits";
 import Dashboard from "./pages/Dashboard";
 import { useNavigate } from "react-router-dom";
 import { SignOutButton, SignInButton } from "./components/AuthButtons";
+import Onboarding from "./pages/Onboarding";
+import GenerateHabits from "./pages/GenerateHabits";
+import Settings from "./pages/Settings";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import {
   collection,
   doc,
@@ -14,8 +19,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import Onboarding from "./pages/Onboarding";
-import GenerateHabits from "./pages/GenerateHabits";
+
 
 interface Habit {
   id: string;
@@ -25,13 +29,14 @@ interface Habit {
   modifiedAt?: Date;
 }
 
-
 const App = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loginStreak, setLoginStreak] = useState<number>(0);
   const navigate = useNavigate();
   const location = useLocation();
+
+  <Router></Router>;
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -203,81 +208,84 @@ const App = () => {
 
       {/* Main content */}
       <div className="flex-1 p-12">
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <>
-                {/* Top nav */}
-                <div className="flex justify-between items-center mb-12">
-                  <div className="flex space-x-10 text-[#174b91] font-medium tracking-wide">
-                    <a href="#" className="hover:underline">Home</a>
-                    <a href="#" className="hover:underline">About</a>
-                    <a href="#" className="hover:underline">Contact</a>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <>
+                  {/* Top nav */}
+                  <div className="flex justify-between items-center mb-12">
+                    <div className="flex space-x-10 text-[#174b91] font-medium tracking-wide">
+                      <Link to={'/'}>Home</Link>
+                      {/* <a href="#" className="hover:underline">Home</a> */}
+                      <Link to={'/about'}>About</Link>
+                      <Link to={'/contact'}>Contact</Link>
+                    </div>
+                    <SignOutButton />
                   </div>
-                  <SignOutButton />
-                </div>
 
-                {/* Header section */}
-                <div className="max-w-3xl">
-                  <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">
-                    Welcome, {user?.displayName?.split(" ")[0] || "User"}
-                  </h1>
-                  <p className="text-green-700 font-semibold mb-2">🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}</p>
-                  {loginStreak > 0 && loginStreak < 4 && (
-                    <p className="text-blue-700 font-small mb-6 italic">Every streak starts at 0...one day at a time!</p>
-                  )}
-                  {loginStreak >= 4 && loginStreak < 7 && (
-                    <p className="text-blue-700 font-medium mb-6">Killing it! You've been showing up for yourself for almost a week now!</p>
-                  )}
-                  {loginStreak >= 7 && loginStreak < 14 && (
-                    <p className="text-purple-700 font-medium mb-6">Amazing streak! You're on fire and building real momentum!</p>
-                  )}
-                  {loginStreak >= 14 && loginStreak < 21 && (
-                    <p className="text-purple-700 font-medium mb-6">They say it takes 21 days to build a habit...Don't quit now! </p>
-                  )}
-                  {loginStreak >= 21 && loginStreak < 30 && (
-                    <p className="text-orange-700 font-medium mb-6">🏆 You’re unstoppable! Just a few days away from hitting 30!</p>
-                  )}
-                  {loginStreak >= 30 && (
-                    <p className="text-green-800 font-medium mb-6">🌟 30-day legend! You've built a rock-solid habit. Keep the streak alive!</p>
-                  )}
-                  <p className="text-gray-700 mb-2 leading-tight">
-                    Stay on top of your goals. Check off habits as you complete them!
-                  </p>
-                </div>
+                  {/* Header section */}
+                  <div className="max-w-3xl">
+                    <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">
+                      Welcome, {user?.displayName?.split(" ")[0] || "User"}
+                    </h1>
+                    <p className="text-green-700 font-semibold mb-2">🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}</p>
+                    {loginStreak > 0 && loginStreak < 4 && (
+                      <p className="text-blue-700 font-small mb-6 italic">Every streak starts at 0...one day at a time!</p>
+                    )}
+                    {loginStreak >= 4 && loginStreak < 7 && (
+                      <p className="text-blue-700 font-medium mb-6">Killing it! You've been showing up for yourself for almost a week now!</p>
+                    )}
+                    {loginStreak >= 7 && loginStreak < 14 && (
+                      <p className="text-purple-700 font-medium mb-6">Amazing streak! You're on fire and building real momentum!</p>
+                    )}
+                    {loginStreak >= 14 && loginStreak < 21 && (
+                      <p className="text-purple-700 font-medium mb-6">They say it takes 21 days to build a habit...Don't quit now! </p>
+                    )}
+                    {loginStreak >= 21 && loginStreak < 30 && (
+                      <p className="text-orange-700 font-medium mb-6">🏆 You’re unstoppable! Just a few days away from hitting 30!</p>
+                    )}
+                    {loginStreak >= 30 && (
+                      <p className="text-green-800 font-medium mb-6">🌟 30-day legend! You've built a rock-solid habit. Keep the streak alive!</p>
+                    )}
+                    <p className="text-gray-700 mb-2 leading-tight">
+                      Stay on top of your goals. Check off habits as you complete them!
+                    </p>
+                  </div>
 
-                {/* Today's Habits */}
-                <ul className="space-y-3">
-                  {habits.map((habit) => (
-                    <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
-                      <span>{habit.name}</span>
-                      <label className="flex items-center space-x-2 text-red-600">
-                        <input
-                          type="checkbox"
-                          checked={habit.complete}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              markComplete(habit.id);
-                            } else {
-                              markInComplete(habit.id);
-                            }
-                          }}
-                        />
-                        {/* <span>Complete</span> */}
-                      </label>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            }
-          />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/habits" element={<Habits />} />
-          <Route path="/settings" element={<div>Settings Page</div>} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/generate-habits" element={<GenerateHabits />}/>
-        </Routes>
+                  {/* Today's Habits */}
+                  <ul className="space-y-3">
+                    {habits.map((habit) => (
+                      <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
+                        <span>{habit.name}</span>
+                        <label className="flex items-center space-x-2 text-red-600">
+                          <input
+                            type="checkbox"
+                            checked={habit.complete}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                markComplete(habit.id);
+                              } else {
+                                markInComplete(habit.id);
+                              }
+                            }}
+                          />
+                          {/* <span>Complete</span> */}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              }
+            />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/habits" element={<Habits />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/generate-habits" element={<GenerateHabits />}/>
+            <Route path="/about" element={<About />}/>
+            <Route path="/contact" element={<Contact />}/>
+          </Routes>
       </div>
     </div>
   );
