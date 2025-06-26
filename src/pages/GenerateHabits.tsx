@@ -9,7 +9,7 @@ export default function GenerateHabits() {
   const [selected, setSelected] = useState<string[]>([]);
 
   const generateHabits = async () => {
-    const res = await fetch("https://<your-region>-<project-id>.cloudfunctions.net/generateHabits", {
+    const res = await fetch("https://habit-generator.onrender.com/generate-habits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ goal }),
