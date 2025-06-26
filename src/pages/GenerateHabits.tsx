@@ -21,6 +21,7 @@ const GenerateHabits: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [showConfirmation, setShowConfirmation] = useState(false);
 
   const user = auth.currentUser;
   const navigate = useNavigate();
@@ -81,6 +82,17 @@ const GenerateHabits: React.FC = () => {
   };
 
   const handleContinue = async () => {
+    if (selectedHabits.size === 0) {
+      setShowConfirmation(true);
+      return;
+    }
+    for (const suggestion of selectedHabits) {
+      await addHabit(suggestion);
+    }
+    navigate("/");
+  };
+
+  const confirmContinue = async () => {
     for (const suggestion of selectedHabits) {
       await addHabit(suggestion);
     }
@@ -100,7 +112,7 @@ const GenerateHabits: React.FC = () => {
       <button
         onClick={handleGenerate}
         className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        disabled={loading}
+        disabled={loading || !goal.trim()}
       >
         {loading ? 'Generating...' : 'Generate Habits'}
       </button>
@@ -130,6 +142,27 @@ const GenerateHabits: React.FC = () => {
           Continue
         </button>
       </div>
+      {showConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-md text-center">
+            <p className="mb-4 text-lg">You haven't selected any habits. Are you sure you want to continue?</p>
+            <div className="flex justify-center gap-4">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded"
+                onClick={() => setShowConfirmation(false)}
+              >
+                No
+              </button>
+              <button
+                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                onClick={confirmContinue}
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
