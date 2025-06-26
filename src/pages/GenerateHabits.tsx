@@ -1,71 +1,122 @@
-// src/pages/GenerateHabits.tsx
-import { useState } from "react";
+import React, { useState } from 'react';
 import { db, auth } from "../firebase/firebase";
-import { collection, addDoc } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+} from "firebase/firestore";
 
-export default function GenerateHabits() {
-  const [goal, setGoal] = useState("");
+interface Habit {
+  id: string;
+  name: string;
+  complete: boolean;
+  createdAt: Date;
+  modifiedAt?: Date;
+}
+
+const GenerateHabits: React.FC = () => {
+  const [goal, setGoal] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [selected, setSelected] = useState<string[]>([]);
+  const [selectedHabits, setSelectedHabits] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [habitName, setHabitName] = useState("");
+  const [habits, setHabits] = useState<Habit[]>([]);
 
-  const generateHabits = async () => {
-    const res = await fetch("https://habit-generator.onrender.com/generate-habits", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ goal }),
-    });
-    const data = await res.json();
-    setSuggestions(data.habits);
+  const user = auth.currentUser;
+
+  const addHabit = async () => {
+    if (!user || !habitName.trim()) return;
+    const newId = habitName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
+    const newHabit = {
+      name: habitName.trim(),
+      active: true,
+      complete: false,
+      createdAt: new Date(),
+      modifiedAt: new Date(),
+    };
+    await setDoc(doc(db, "users", user.uid, "habits", newId), newHabit);
+    setHabitName("");
+    setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
   };
 
-  const toggleHabit = async (habit: string) => {
-    const user = auth.currentUser;
-    if (!user) return;
+  const toggleHabit = (suggestion: string) => {
+    const trimmed = suggestion.trim();
+    setSelectedHabits((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(trimmed)) {
+        newSet.delete(trimmed);
+        console.log(newSet);
+      } else {
+        newSet.add(trimmed);
+        console.log(newSet);
+      }
+      return newSet;
+    });
+  };
 
-    if (selected.includes(habit)) {
-      setSelected((prev) => prev.filter((h) => h !== habit));
-      // Optionally remove from Firestore
-    } else {
-      setSelected((prev) => [...prev, habit]);
-      await addDoc(collection(db, "users", user.uid, "habits"), {
-        name: habit,
-        complete: false,
-        createdAt: new Date(),
+  const handleGenerate = async () => {
+    if (!goal.trim()) return;
+
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch('https://habit-generator.onrender.com/generate-habits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ goal }),
       });
+
+      if (!response.ok) throw new Error('Failed to fetch habits');
+
+      const data = await response.json();
+      console.log(data);
+      setSuggestions(data.habits); // Assumes API returns { habits: [...] }
+    } catch (err) {
+        console.error('API error:', err);
+        setError('Error generating habits. Please try again.');
+      } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-8 max-w-xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">What's your goal?</h1>
-      <input
-        className="w-full border p-2 rounded mb-4"
+    <div className="p-4 max-w-xl mx-auto">
+      <h1 className="text-xl font-bold mb-4">Generate Habits</h1>
+      <textarea
         value={goal}
         onChange={(e) => setGoal(e.target.value)}
-        placeholder="e.g., Get in shape"
+        className="w-full p-2 border border-gray-300 rounded mb-2"
+        rows={3}
+        placeholder="Enter your vague goal..."
       />
       <button
-        onClick={generateHabits}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
+        onClick={handleGenerate}
+        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        disabled={loading}
       >
-        Generate Suggestions
+        {loading ? 'Generating...' : 'Generate Habits'}
       </button>
 
-      <div className="mt-6 flex flex-wrap gap-2">
-        {suggestions.map((habit) => (
-          <button
-            key={habit}
-            onClick={() => toggleHabit(habit)}
-            className={`px-4 py-2 rounded ${
-              selected.includes(habit)
-                ? "bg-blue-700 text-white"
-                : "bg-gray-300 text-gray-800"
-            }`}
-          >
-            {habit}
-          </button>
-        ))}
+      {error && <p className="text-red-500 mt-2">{error}</p>}
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {suggestions.map((suggestion, idx) => {
+          const selected = selectedHabits.has(suggestion.trim());
+          return (
+            <button
+              key={idx}
+              onClick={() => toggleHabit(suggestion)}
+              className={`px-4 py-2 rounded border ${selected ? 'bg-blue-800 text-white' : 'bg-white text-gray-800 border-gray-400'}`}
+            >
+              {suggestion}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
-}
+};
+
+export default GenerateHabits;
