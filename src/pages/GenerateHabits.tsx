@@ -43,6 +43,7 @@ const GenerateHabits: React.FC = () => {
     const trimmed = suggestion.trim();
     setSelectedHabits((prev) => {
       const newSet = new Set(prev);
+
       if (newSet.has(trimmed)) {
         newSet.delete(trimmed);
         console.log(newSet);
@@ -108,10 +109,11 @@ const GenerateHabits: React.FC = () => {
             <button
               key={idx}
               onClick={() => toggleHabit(suggestion)}
-              className={`px-4 py-2 rounded border ${selected ? 'bg-blue-800 text-white' : 'bg-white text-gray-800 border-gray-400'}`}
+              className={`px-4 py-2 rounded border text-white ${selected ? 'bg-[#0b7268]' : 'bg-white text-black'}`}
             >
               {suggestion}
             </button>
+            
           );
         })}
       </div>
