@@ -4,6 +4,7 @@ import {
   doc,
   setDoc,
 } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 interface Habit {
   id: string;
@@ -19,23 +20,22 @@ const GenerateHabits: React.FC = () => {
   const [selectedHabits, setSelectedHabits] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [habitName, setHabitName] = useState("");
   const [habits, setHabits] = useState<Habit[]>([]);
 
   const user = auth.currentUser;
+  const navigate = useNavigate();
 
-  const addHabit = async () => {
-    if (!user || !habitName.trim()) return;
-    const newId = habitName.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
+  const addHabit = async (name: string) => {
+    if (!user || !name.trim()) return;
+    const newId = name.toLowerCase().replace(/\s+/g, "-") + "-" + Date.now();
     const newHabit = {
-      name: habitName.trim(),
+      name: name.trim(),
       active: true,
       complete: false,
       createdAt: new Date(),
       modifiedAt: new Date(),
     };
     await setDoc(doc(db, "users", user.uid, "habits", newId), newHabit);
-    setHabitName("");
     setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
   };
 
@@ -46,10 +46,8 @@ const GenerateHabits: React.FC = () => {
 
       if (newSet.has(trimmed)) {
         newSet.delete(trimmed);
-        console.log(newSet);
       } else {
         newSet.add(trimmed);
-        console.log(newSet);
       }
       return newSet;
     });
@@ -80,6 +78,13 @@ const GenerateHabits: React.FC = () => {
       } finally {
       setLoading(false);
     }
+  };
+
+  const handleContinue = async () => {
+    for (const suggestion of selectedHabits) {
+      await addHabit(suggestion);
+    }
+    navigate("/");
   };
 
   return (
@@ -116,6 +121,14 @@ const GenerateHabits: React.FC = () => {
             
           );
         })}
+      </div>
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={handleContinue}
+          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+        >
+          Continue
+        </button>
       </div>
     </div>
   );
