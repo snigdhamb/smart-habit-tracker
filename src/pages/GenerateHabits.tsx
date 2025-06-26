@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { db, auth } from "../firebase/firebase";
 import {
   doc,
@@ -21,7 +21,7 @@ const GenerateHabits: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [habits, setHabits] = useState<Habit[]>([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   const user = auth.currentUser;
   const navigate = useNavigate();
@@ -83,7 +83,9 @@ const GenerateHabits: React.FC = () => {
 
   const handleContinue = async () => {
     if (selectedHabits.size === 0) {
-      setShowConfirmation(true);
+      if (dialogRef.current) {
+        dialogRef.current.showModal();
+      }
       return;
     }
     for (const suggestion of selectedHabits) {
@@ -142,27 +144,28 @@ const GenerateHabits: React.FC = () => {
           Continue
         </button>
       </div>
-      {showConfirmation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded shadow-md text-center">
-            <p className="mb-4 text-lg">You haven't selected any habits. Are you sure you want to continue?</p>
-            <div className="flex justify-center gap-4">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded"
-                onClick={() => setShowConfirmation(false)}
-              >
-                No
-              </button>
-              <button
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                onClick={confirmContinue}
-              >
-                Yes
-              </button>
-            </div>
+      <dialog ref={dialogRef} className="rounded shadow-md p-0 border-0">
+        <div className="bg-white p-6 rounded shadow-md text-center max-w-md w-full">
+          <p className="mb-4 text-lg">You haven't selected any habits. Are you sure you want to continue?</p>
+          <div className="flex justify-center gap-4">
+            <button
+              className="bg-gray-300 px-4 py-2 rounded"
+              onClick={() => dialogRef.current?.close()}
+            >
+              No
+            </button>
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              onClick={() => {
+                dialogRef.current?.close();
+                confirmContinue();
+              }}
+            >
+              Yes
+            </button>
           </div>
         </div>
-      )}
+      </dialog>
     </div>
   );
 };
