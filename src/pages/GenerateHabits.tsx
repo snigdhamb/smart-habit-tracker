@@ -38,6 +38,7 @@ const GenerateHabits: React.FC = () => {
     };
     await setDoc(doc(db, "users", user.uid, "habits", newId), newHabit);
     setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
+    console.log(habits);
   };
 
   const toggleHabit = (suggestion: string) => {
