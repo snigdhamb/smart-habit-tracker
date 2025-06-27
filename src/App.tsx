@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { db, auth } from "./firebase/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Habits from "./pages/Habits";
 import Dashboard from "./pages/Dashboard";
 import { useNavigate } from "react-router-dom";
-import { SignOutButton, SignInButton } from "./components/AuthButtons";
+import { SignInButton } from "./components/AuthButtons";
 import Onboarding from "./pages/Onboarding";
 import GenerateHabits from "./pages/GenerateHabits";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
+import { WelcomeMessage } from "./components/WelcomeMessage";
+import { NavBar } from "./components/NavBar";
+
 import {
   collection,
   doc,
@@ -20,6 +23,10 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+/* UI Imports */
+import { HiColorSwatch } from "react-icons/hi";
+import { Heading, Center, Highlight, Button, ButtonGroup, EmptyState, VStack, Stack} from "@chakra-ui/react";
+import SignIn from "./pages/SignIn";
 
 interface Habit {
   id: string;
@@ -152,10 +159,7 @@ const App = () => {
 
   if (!user) {
     return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold mb-4">Smart Track</h1>
-        <SignInButton />
-      </div>
+      <SignIn />
     );
   }
 
@@ -168,41 +172,26 @@ const App = () => {
             <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center">
               <span className="text-[#2ab9a3] font-bold text-base">✓</span>
             </div>
-            <span className="text-2xl font-semibold">Habit Tracker</span>
           </div>
-          <nav className="space-y-5">
-            <button
-              onClick={() => navigate("/")}
-              className="bg-[#0b7268] px-5 py-3 rounded-md w-full text-left font-semibold flex items-center space-x-3 transition hover:scale-105"
-            >
-              <span className="text-lg">🏠</span>
-              <span>Home</span>
-            </button>
+            <nav className="space-y-5">
+              <Stack>
+                <Button onClick={() => navigate("/")} bgColor={"teal"}>
+                  <span>Home</span>
+                </Button>
 
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
-            >
-              <span className="text-lg">📊</span>
-              <span>Progress</span>
-            </button>
+                <Button onClick={() => navigate("/dashboard")} colorPalette={"teal"} variant={"outline"}>
+                  <span>Progress</span>
+                </Button>
 
-            <button
-              onClick={() => navigate("/habits")}
-              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
-            >
-              <span className="text-lg">📋</span>
-              <span>Habits</span>
-            </button>
+                <Button onClick={() => navigate("/habits")} colorPalette={"teal"} variant={"outline"}>
+                  <span>Habits</span>
+                </Button>
 
-            <button
-              onClick={() => navigate("/settings")}
-              className="px-5 py-3 rounded-md w-full text-left flex items-center space-x-3 transition hover:bg-[#199d8a] hover:scale-105"
-            >
-              <span className="text-lg">⚙️</span>
-              <span>Settings</span>
-            </button>
-          </nav>
+                <Button onClick={() => navigate("/settings")} colorPalette={"teal"} variant={"outline"}>
+                  <span>Settings</span>
+                </Button>
+              </Stack>
+            </nav>
         </div>
       </aside>
 
@@ -214,67 +203,69 @@ const App = () => {
               element={
                 <>
                   {/* Top nav */}
-                  <div className="flex justify-between items-center mb-12">
-                    <div className="flex space-x-10 text-[#174b91] font-medium tracking-wide">
-                      <Link to={'/'}>Home</Link>
-                      {/* <a href="#" className="hover:underline">Home</a> */}
-                      <Link to={'/about'}>About</Link>
-                      <Link to={'/contact'}>Contact</Link>
-                    </div>
-                    <SignOutButton />
-                  </div>
+                  <NavBar username={user?.displayName?.split(" ")[0] || "User"}/>
 
                   {/* Header section */}
                   <div className="max-w-3xl">
-                    <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight">
-                      Welcome, {user?.displayName?.split(" ")[0] || "User"}
-                    </h1>
+                    {/* <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight"> */}
+                    <Center>
+                      <Heading size="3xl" letterSpacing="tight">
+                        <Highlight
+                          query={user?.displayName?.split(" ")[0] || "User"}
+                          styles={{ color: "teal.600" }}
+                        >
+                          {`Welcome, ${user?.displayName?.split(" ")[0] || "User"}`}
+                        </Highlight>
+                      </Heading>
+                    </Center>
+                    {/* </h1> */}
                     <p className="text-green-700 font-semibold mb-2">🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}</p>
-                    {loginStreak > 0 && loginStreak < 4 && (
-                      <p className="text-blue-700 font-small mb-6 italic">Every streak starts at 0...one day at a time!</p>
-                    )}
-                    {loginStreak >= 4 && loginStreak < 7 && (
-                      <p className="text-blue-700 font-medium mb-6">Killing it! You've been showing up for yourself for almost a week now!</p>
-                    )}
-                    {loginStreak >= 7 && loginStreak < 14 && (
-                      <p className="text-purple-700 font-medium mb-6">Amazing streak! You're on fire and building real momentum!</p>
-                    )}
-                    {loginStreak >= 14 && loginStreak < 21 && (
-                      <p className="text-purple-700 font-medium mb-6">They say it takes 21 days to build a habit...Don't quit now! </p>
-                    )}
-                    {loginStreak >= 21 && loginStreak < 30 && (
-                      <p className="text-orange-700 font-medium mb-6">🏆 You’re unstoppable! Just a few days away from hitting 30!</p>
-                    )}
-                    {loginStreak >= 30 && (
-                      <p className="text-green-800 font-medium mb-6">🌟 30-day legend! You've built a rock-solid habit. Keep the streak alive!</p>
-                    )}
-                    <p className="text-gray-700 mb-2 leading-tight">
-                      Stay on top of your goals. Check off habits as you complete them!
-                    </p>
+                    <WelcomeMessage loginStreak={loginStreak}/>
                   </div>
 
+                  <Heading size="xl">My Habits</Heading>
+
                   {/* Today's Habits */}
-                  <ul className="space-y-3">
-                    {habits.map((habit) => (
-                      <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
-                        <span>{habit.name}</span>
-                        <label className="flex items-center space-x-2 text-red-600">
-                          <input
-                            type="checkbox"
-                            checked={habit.complete}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                markComplete(habit.id);
-                              } else {
-                                markInComplete(habit.id);
-                              }
-                            }}
-                          />
-                          {/* <span>Complete</span> */}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
+                  {habits.length === 0 ? (
+                    <EmptyState.Root>
+                      <EmptyState.Content>
+                        <EmptyState.Indicator>
+                          <HiColorSwatch />
+                        </EmptyState.Indicator>
+                        <VStack textAlign="center">
+                          <EmptyState.Title>Momentum starts with one tap.</EmptyState.Title>
+                          <EmptyState.Description>
+                            No pressure, just progress--add a habit to kick things off
+                          </EmptyState.Description>
+                        </VStack>
+                        <ButtonGroup>
+                          <Button onClick={() => navigate("/habits")} colorPalette={"teal"} variant={"surface"}>Add Habits</Button>
+                        </ButtonGroup>
+                      </EmptyState.Content>
+                    </EmptyState.Root>
+                  ) : (
+                    <ul className="space-y-3">
+                      {habits.map((habit) => (
+                        <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
+                          <span>{habit.name}</span>
+                          <label className="flex items-center space-x-2 text-red-600">
+                            <input
+                              type="checkbox"
+                              checked={habit.complete}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  markComplete(habit.id);
+                                } else {
+                                  markInComplete(habit.id);
+                                }
+                              }}
+                            />
+                            {/* <span>Complete</span> */}
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </>
               }
             />

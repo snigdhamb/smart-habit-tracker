@@ -2,6 +2,7 @@
 // import React from 'react';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { auth, provider } from '../firebase/firebase';
+import { Button } from '@chakra-ui/react';
 
 export const SignInButton = () => {
   const handleSignIn = async () => {
@@ -13,18 +14,18 @@ export const SignInButton = () => {
   };
 
   return (
-    <button onClick={handleSignIn} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+    <Button onClick={handleSignIn} bgColor={'teal.600'}>
       Sign in with Google
-    </button>
+    </Button>
   );
 };
 
 export const SignOutButton = () => {
   return (
     auth.currentUser && (
-      <button onClick={() => signOut(auth)} className="bg-gray-600 text-white px-4 py-2 rounded">
+      <Button onClick={() => signOut(auth)} bgColor={'gray.300'}>
         Sign out
-      </button>
+      </Button>
     )
   );
 };
