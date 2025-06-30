@@ -7,8 +7,8 @@ import { SignOutButton } from "./AuthButtons";
 import Settings from "@/pages/Settings";
 import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/firebase/firebase";
+// import { doc, getDoc } from "firebase/firestore";
+// import { db } from "@/firebase/firebase";
 
 export const NavBar = () => {
   const navigate = useNavigate()
@@ -20,21 +20,21 @@ export const NavBar = () => {
   })
   
   const [user, setUser] = useState<User | null>(null);
-  const [loginStreak, setLoginStreak] = useState<number>(0);
+//   const [loginStreak, setLoginStreak] = useState<number>(0);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
-        if (currentUser) {
-            const userDocRef = doc(db, "users", currentUser.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (userDocSnap.exists()) {
-                const userData = userDocSnap.data();
-                let streak = userData.loginStreak;
-                setLoginStreak(streak);
-            }
-        }
+        // if (currentUser) {
+        //     const userDocRef = doc(db, "users", currentUser.uid);
+        //     const userDocSnap = await getDoc(userDocRef);
+        //     if (userDocSnap.exists()) {
+        //         const userData = userDocSnap.data();
+        //         let streak = userData.loginStreak;
+        //         setLoginStreak(streak);
+        //     }
+        // }
     });
     return () => unsubscribe();
   }, []);
@@ -46,7 +46,7 @@ export const NavBar = () => {
         </Routes>
         <Container >
             <Flex justify="flex-end">
-                <Stack direction={"row"} h="13" gap={6}>
+                <Stack direction={"row"} h="13" gap={12}>
                     <Center>
                         <Link color="teal" to={'/about'}>About</Link>
                     </Center>

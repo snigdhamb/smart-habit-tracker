@@ -114,9 +114,9 @@ const chartOptions = {
     }));
 
   return (
-    <Container pl={20}>
-      <div className="p-8">
-        <NavBar />
+    <div className="p-8">
+      <NavBar />
+      <Container pl={20}>
         <Center mb={10}>
           <Heading size={"3xl"}>Progress</Heading>
         </Center>
@@ -183,8 +183,8 @@ const chartOptions = {
           .color-scale-4 { fill:rgb(39, 130, 72); }
           .color-scale-5 { fill:rgb(9, 88, 38); }
         `}</style>
-      </div>
-    </Container>
+      </Container>
+    </div>
   );
 };
 

@@ -7,7 +7,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { NavBar } from '@/components/NavBar';
 
-import { Heading, Container, Center, Input, Button, ProgressCircle, Stack, Flex, Wrap, Dialog } from '@chakra-ui/react';
+import { Heading, Container, Center, Input, Button, ProgressCircle, Stack, Wrap, Dialog } from '@chakra-ui/react';
 
 interface Habit {
   id: string;
@@ -165,7 +165,7 @@ const GenerateHabits: React.FC = () => {
             Continue
           </Button>
         </div>
-        <Dialog.Root open={showDialog}>
+        <Dialog.Root open={showDialog} role="alertdialog">
           <Dialog.Backdrop />
           <Dialog.Positioner>
             <Dialog.Content>

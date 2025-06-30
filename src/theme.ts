@@ -1,5 +1,4 @@
 import {
-  ChakraProvider,
   createSystem,
   defaultConfig,
   defineConfig,

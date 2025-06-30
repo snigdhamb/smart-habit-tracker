@@ -12,7 +12,7 @@ import {
 import { NavBar } from "@/components/NavBar";
 
 //ui
-import { Center, Container, Heading, Button, Input, Stack, EmptyState, VStack, IconButton, Flex, Text, HStack, Editable, Card } from "@chakra-ui/react";
+import { Center, Container, Heading, Button, Input, Stack, EmptyState, VStack, IconButton, Flex, Text, HStack, Card } from "@chakra-ui/react";
 
 // icons
 import { ImFilesEmpty } from "react-icons/im";
@@ -182,7 +182,7 @@ const Habits = () => {
                   value={habitName}
                   onChange={(e) => setHabitName(e.target.value)}
                 />
-                <Button onClick={addHabit} bgColor={"navy"}>
+                <Button onClick={addHabit} disabled={!habitName.trim()} bgColor={"navy"}>
                   Add Habit
                 </Button>
               </Stack></Center>
