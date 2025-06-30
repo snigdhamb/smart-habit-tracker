@@ -9,11 +9,11 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
+          50: '#1A535C',
+          100: '#4ECDC4',
+          200: '#F7FFF7',
+          300: '#D33F49',
+          400: '#FFE66D',
           500: '#22c55e',
           600: '#16a34a',
           700: '#15803d',
@@ -36,5 +36,4 @@ const config: Config = {
   plugins: [],
 }
 
-export default config
-};
+export default config;

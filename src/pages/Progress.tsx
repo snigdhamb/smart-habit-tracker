@@ -7,6 +7,8 @@ import "react-calendar-heatmap/dist/styles.css";
 import { addMonths, subMonths, startOfMonth, endOfMonth, format } from "date-fns";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from 'chart.js';
+import { Heading, Container, Center } from "@chakra-ui/react";
+import { NavBar } from "@/components/NavBar";
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 interface HabitEntry {
@@ -112,72 +114,77 @@ const chartOptions = {
     }));
 
   return (
-    <div className="p-8">
-      <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-      {/* Weekly Completion Line Chart */}
-      <div className="mt-6">
-        <div className="flex justify-center">
-          <h3 className="text-lg font-semibold mb-2">This Week's Progress</h3>
+    <Container pl={20}>
+      <div className="p-8">
+        <NavBar />
+        <Center mb={10}>
+          <Heading size={"3xl"}>Progress</Heading>
+        </Center>
+        {/* Weekly Completion Line Chart */}
+        <div className="mt-6">
+          <div className="flex justify-center">
+            <h3 className="text-lg font-semibold mb-2">This Week's Progress</h3>
+          </div>
+          <Line data={weeklyChartData} options={chartOptions}/>
         </div>
-        <Line data={weeklyChartData} options={chartOptions}/>
-      </div>
-      <style>{`
-        .color-empty { fill: #eee; }
-        .color-scale-1 { fill:rgb(255, 169, 175); }
-        .color-scale-2 { fill:rgb(255, 186, 112); }
-        .color-scale-3 { fill:rgb(200, 236, 132); }
-        .color-scale-4 { fill:rgb(100, 194, 134); }
-        .color-scale-5 { fill:rgb(47, 128, 77); }
-      `}</style>
+        <style>{`
+          .color-empty { fill: #eee; }
+          .color-scale-1 { fill:rgb(255, 169, 175); }
+          .color-scale-2 { fill:rgb(255, 186, 112); }
+          .color-scale-3 { fill:rgb(200, 236, 132); }
+          .color-scale-4 { fill:rgb(100, 194, 134); }
+          .color-scale-5 { fill:rgb(47, 128, 77); }
+        `}</style>
 
-      {/* Heatmap */}
-      <div className="flex justify-center">
-        <h3 className="text-lg font-semibold mb-2">Daily Activity</h3>
+        {/* Heatmap */}
+        <div className="flex justify-center">
+          <h3 className="text-lg font-semibold mb-2">Daily Activity</h3>
+        </div>
+        <select
+          className="border p-2 mb-4"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+        >
+          <option value="">All Habits</option>
+          {habitNames.map((name, idx) => (
+            <option key={idx} value={name}>
+              {name}
+            </option>
+          ))}
+        </select>
+        <div className="flex items-center justify-between mb-2">
+          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>← Prev</button>
+          <span className="font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
+          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>Next →</button>
+        </div>
+        <CalendarHeatmap
+          startDate={startOfMonth(currentMonth)}
+          endDate={endOfMonth(currentMonth)}
+          values={heatmapValues}
+          classForValue={(value) => {
+            if (!value) return "color-empty";
+            const ratio = value.count || 0;
+            if (ratio === 0) return "color-scale-1";
+            if (ratio < 0.25) return "color-scale-2";
+            if (ratio < 0.50) return "color-scale-3";
+            if (ratio < 0.75) return "color-scale-4";
+            return "color-scale-5";
+          }}
+          tooltipDataAttrs={(value) => ({
+            "data-tip": `${value.date}: ${((value.count || 0) * 100).toFixed(0)}% complete`,
+          })}
+          // showWeekdayLabels
+        />
+        <style>{`
+          .color-empty { fill: #eee; }
+          .color-scale-1 { fill:rgb(249, 142, 121); }
+          .color-scale-2 { fill:rgb(123, 199, 151); }
+          .color-scale-3 { fill:rgb(79, 166, 111); }
+          .color-scale-4 { fill:rgb(39, 130, 72); }
+          .color-scale-5 { fill:rgb(9, 88, 38); }
+        `}</style>
       </div>
-      <select
-        className="border p-2 mb-4"
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-      >
-        <option value="">All Habits</option>
-        {habitNames.map((name, idx) => (
-          <option key={idx} value={name}>
-            {name}
-          </option>
-        ))}
-      </select>
-      <div className="flex items-center justify-between mb-2">
-        <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>← Prev</button>
-        <span className="font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
-        <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>Next →</button>
-      </div>
-      <CalendarHeatmap
-        startDate={startOfMonth(currentMonth)}
-        endDate={endOfMonth(currentMonth)}
-        values={heatmapValues}
-        classForValue={(value) => {
-          if (!value) return "color-empty";
-          const ratio = value.count || 0;
-          if (ratio === 0) return "color-scale-1";
-          if (ratio < 0.25) return "color-scale-2";
-          if (ratio < 0.50) return "color-scale-3";
-          if (ratio < 0.75) return "color-scale-4";
-          return "color-scale-5";
-        }}
-        tooltipDataAttrs={(value) => ({
-          "data-tip": `${value.date}: ${((value.count || 0) * 100).toFixed(0)}% complete`,
-        })}
-        // showWeekdayLabels
-      />
-      <style>{`
-        .color-empty { fill: #eee; }
-        .color-scale-1 { fill:rgb(249, 142, 121); }
-        .color-scale-2 { fill:rgb(123, 199, 151); }
-        .color-scale-3 { fill:rgb(79, 166, 111); }
-        .color-scale-4 { fill:rgb(39, 130, 72); }
-        .color-scale-5 { fill:rgb(9, 88, 38); }
-      `}</style>
-    </div>
+    </Container>
   );
 };
 

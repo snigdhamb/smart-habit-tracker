@@ -4,14 +4,13 @@
 import { Avatar, Menu, Portal, Flex, Container, Stack, Center, LinkOverlay, LinkBox, defineStyle } from "@chakra-ui/react"
 import { Routes, Route, Link, useNavigate } from "react-router-dom"
 import { SignOutButton } from "./AuthButtons";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Settings from "@/pages/Settings";
-interface NavBarProps {
-  username: string
-//   login_streak: number
-}
+import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/firebase/firebase";
 
-export const NavBar = ({ username }: NavBarProps) => {
+export const NavBar = () => {
   const navigate = useNavigate()
   const ringCss = defineStyle({
     outlineWidth: "2px",
@@ -20,16 +19,36 @@ export const NavBar = ({ username }: NavBarProps) => {
     outlineStyle: "solid",
   })
   
+  const [user, setUser] = useState<User | null>(null);
+  const [loginStreak, setLoginStreak] = useState<number>(0);
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        setUser(currentUser);
+        if (currentUser) {
+            const userDocRef = doc(db, "users", currentUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                let streak = userData.loginStreak;
+                setLoginStreak(streak);
+            }
+        }
+    });
+    return () => unsubscribe();
+  }, []);
+  
   return (
     <>
         <Routes>
             <Route path="/settings" element={<Settings />} />
         </Routes>
-        <Container colorPalette={"blue.100"} >
-            <Flex gap="4" justify="flex-end">
-                <Stack direction={"row"} h="13">
+        <Container >
+            <Flex justify="flex-end">
+                <Stack direction={"row"} h="13" gap={6}>
                     <Center>
-                        <Link to={'/about'}>About</Link>
+                        <Link color="teal" to={'/about'}>About</Link>
                     </Center>
                     <Center>
                         <Link to={'/contact'}>Contact</Link>
@@ -37,8 +56,8 @@ export const NavBar = ({ username }: NavBarProps) => {
                     <Center>
                         <Menu.Root navigate={({ value }) => navigate(`/${value}`)} positioning={{ placement: "bottom-end" }}>
                             <Menu.Trigger rounded="full" focusRing="outside">
-                                <Avatar.Root css={ringCss} colorPalette={"blue"} size="lg">
-                                <Avatar.Fallback name={username} />
+                                <Avatar.Root css={ringCss} colorPalette={"teal"} size="lg">
+                                <Avatar.Fallback name={user?.displayName?.split(" ")[0] || "User"} />
                                 </Avatar.Root>
                             </Menu.Trigger>
                             <Portal>

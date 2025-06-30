@@ -1,28 +1,22 @@
-const Settings = () => {
+// src/pages/About.tsx
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Heading } from "@chakra-ui/react";
+import { NavBar } from "@/components/NavBar";
+import Contact from "./Contact";
+
+export default function About() {
+  <Router></Router>;
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Settings</h2>
+    <div className="p-12 max-w-xl mx-auto text-center">
+      {/* Top nav */}
+      <NavBar />
+      
+      <Heading size={"3xl"}>Settings</Heading>
 
-      <section className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Profile</h3>
-        <input className="block mb-2 p-2 border w-full" placeholder="Full Name" />
-        <input className="block p-2 border w-full" placeholder="Email" />
-      </section>
-
-      <section className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Account</h3>
-        <button className="bg-yellow-400 px-4 py-2 rounded">Change Password</button>
-      </section>
-
-      <section>
-        <h3 className="text-lg font-semibold mb-2">Notifications</h3>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" defaultChecked />
-          Receive email notifications
-        </label>
-      </section>
+      <Routes>
+        <Route path="/about" element={<About />}/>
+        <Route path="/contact" element={<Contact />}/>
+      </Routes>
     </div>
   );
-};
-
-export default Settings;
+}

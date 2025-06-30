@@ -1,10 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { db, auth } from "../firebase/firebase";
 import {
   doc,
   setDoc,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
+import { NavBar } from '@/components/NavBar';
+
+import { Heading, Container, Center, Input, Button, ProgressCircle, Stack, Flex, Wrap, Dialog } from '@chakra-ui/react';
 
 interface Habit {
   id: string;
@@ -21,7 +24,7 @@ const GenerateHabits: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [habits, setHabits] = useState<Habit[]>([]);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   const user = auth.currentUser;
   const navigate = useNavigate();
@@ -84,9 +87,7 @@ const GenerateHabits: React.FC = () => {
 
   const handleContinue = async () => {
     if (selectedHabits.size === 0) {
-      if (dialogRef.current) {
-        dialogRef.current.showModal();
-      }
+      setShowDialog(true);
       return;
     }
     for (const suggestion of selectedHabits) {
@@ -103,71 +104,88 @@ const GenerateHabits: React.FC = () => {
   };
 
   return (
-    <div className="p-4 max-w-xl mx-auto">
-      <h1 className="text-xl font-bold mb-4">Generate Habits</h1>
-      <textarea
-        value={goal}
-        onChange={(e) => setGoal(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded mb-2"
-        rows={3}
-        placeholder="Enter your vague goal..."
-      />
-      <button
-        onClick={handleGenerate}
-        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        disabled={loading || !goal.trim()}
-      >
-        {loading ? 'Generating...' : 'Generate Habits'}
-      </button>
+    <>
+      <NavBar />
+      
+      <Container maxW="6xl">
+        
+        <Center mb={20}>
+          <Heading size={"3xl"}>Generate Habits</Heading>
+        </Center>
 
-      {error && <p className="text-red-500 mt-2">{error}</p>}
+        <Stack direction={"row"} mb={10}>
+          <Input
+            value={goal}
+            onChange={(e) => setGoal(e.target.value)}
+            placeholder="Enter your vague goal..."
+          />
+          <Button
+            onClick={handleGenerate}
+            disabled={!goal.trim()}
+            bgColor={"selectiveYellow"}
+          >
+            {loading ? (
+              <ProgressCircle.Root value={null} size="xs">
+                <ProgressCircle.Circle>
+                  <ProgressCircle.Track />
+                  <ProgressCircle.Range stroke={"navy"} />
+                </ProgressCircle.Circle>
+              </ProgressCircle.Root>
+            ) : (
+              'Generate Habits'
+            )}
+          </Button>
+        </Stack>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {suggestions.map((suggestion, idx) => {
-          const selected = selectedHabits.has(suggestion.trim());
-          return (
-            <button
-              key={idx}
-              onClick={() => toggleHabit(suggestion)}
-              className={`px-4 py-2 rounded border text-white ${selected ? 'bg-[#0b7268]' : 'bg-white text-black'}`}
-            >
-              {suggestion}
-            </button>
-            
-          );
-        })}
-      </div>
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={handleContinue}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-        >
-          Continue
-        </button>
-      </div>
-      <dialog ref={dialogRef} className="rounded shadow-md p-0 border-0">
-        <div className="bg-white p-6 rounded shadow-md text-center max-w-md w-full">
-          <p className="mb-4 text-lg">You haven't selected any habits. Are you sure you want to continue?</p>
-          <div className="flex justify-center gap-4">
-            <button
-              className="bg-gray-300 px-4 py-2 rounded"
-              onClick={() => dialogRef.current?.close()}
-            >
-              No
-            </button>
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              onClick={() => {
-                dialogRef.current?.close();
-                confirmContinue();
-              }}
-            >
-              Yes
-            </button>
-          </div>
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+
+        <Wrap gap="4">
+          {suggestions.map((suggestion, idx) => {
+            const selected = selectedHabits.has(suggestion.trim());
+            return (
+              <Button
+                key={idx}
+                onClick={() => toggleHabit(suggestion)}
+                bgColor={selected ? 'navy' : 'blueGray'}
+                color="white"
+                _hover={{ bg: selected ? 'navy' : 'blueGray' }}
+              >
+                {suggestion}
+              </Button>
+              
+            );
+          })}
+        </Wrap>
+        <div className="mt-6 flex justify-center">
+          <Button
+            onClick={handleContinue}
+            bgColor={"rust"}
+            mt={20}
+          >
+            Continue
+          </Button>
         </div>
-      </dialog>
-    </div>
+        <Dialog.Root open={showDialog}>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>
+                <Dialog.Title>Confirmation</Dialog.Title>
+              </Dialog.Header>
+              <Dialog.Body>
+                <p>You haven't selected any habits. Are you sure you want to continue?</p>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Button bgColor={"rust"} onClick={() => setShowDialog(false)}>No</Button>
+                <Button bgColor={"midnightGreen"} onClick={() => { confirmContinue(); setShowDialog(false); }}>
+                  Yes
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Dialog.Root>
+      </Container>
+    </>
   );
 };
 

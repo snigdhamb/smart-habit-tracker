@@ -3,9 +3,8 @@ import { db, auth } from "./firebase/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import Habits from "./pages/Habits";
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/Progress";
 import { useNavigate } from "react-router-dom";
-import { SignInButton } from "./components/AuthButtons";
 import Onboarding from "./pages/Onboarding";
 import GenerateHabits from "./pages/GenerateHabits";
 import Settings from "./pages/Settings";
@@ -25,8 +24,9 @@ import {
 
 /* UI Imports */
 import { HiColorSwatch } from "react-icons/hi";
-import { Heading, Center, Highlight, Button, ButtonGroup, EmptyState, VStack, Stack} from "@chakra-ui/react";
+import { Heading, Center, Highlight, Button, ButtonGroup, EmptyState, VStack, Container, Stack, Card, Flex, Text} from "@chakra-ui/react";
 import SignIn from "./pages/SignIn";
+import Sidebar from "./components/SideBar";
 
 interface Habit {
   id: string;
@@ -164,36 +164,9 @@ const App = () => {
   }
 
   return (
-    <div className="flex min-h-screen font-sans bg-[#fdfcfb]">
+    <div className="flex h-screen w-screen font-sans bg-[#fdfcfb]">
       {/* Sidebar */}
-      <aside className="w-64 bg-[#2ab9a3] text-white p-8 flex flex-col justify-between rounded-r-3xl">
-        <div>
-          <div className="flex items-center space-x-3 mb-12">
-            <div className="w-7 h-7 bg-white rounded-full flex items-center justify-center">
-              <span className="text-[#2ab9a3] font-bold text-base">✓</span>
-            </div>
-          </div>
-            <nav className="space-y-5">
-              <Stack>
-                <Button onClick={() => navigate("/")} bgColor={"teal"}>
-                  <span>Home</span>
-                </Button>
-
-                <Button onClick={() => navigate("/dashboard")} colorPalette={"teal"} variant={"outline"}>
-                  <span>Progress</span>
-                </Button>
-
-                <Button onClick={() => navigate("/habits")} colorPalette={"teal"} variant={"outline"}>
-                  <span>Habits</span>
-                </Button>
-
-                <Button onClick={() => navigate("/settings")} colorPalette={"teal"} variant={"outline"}>
-                  <span>Settings</span>
-                </Button>
-              </Stack>
-            </nav>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* Main content */}
       <div className="flex-1 p-12">
@@ -201,14 +174,14 @@ const App = () => {
             <Route
               path="/"
               element={
-                <>
+              <>
+                <NavBar />
+                <Container maxW="3xl">
                   {/* Top nav */}
-                  <NavBar username={user?.displayName?.split(" ")[0] || "User"}/>
 
                   {/* Header section */}
-                  <div className="max-w-3xl">
-                    {/* <h1 className="text-4xl font-bold text-[#123d6a] mb-3 leading-tight"> */}
-                    <Center>
+                  <Container mb={10}>
+                    <Center mb={10}>
                       <Heading size="3xl" letterSpacing="tight">
                         <Highlight
                           query={user?.displayName?.split(" ")[0] || "User"}
@@ -218,10 +191,13 @@ const App = () => {
                         </Highlight>
                       </Heading>
                     </Center>
-                    {/* </h1> */}
-                    <p className="text-green-700 font-semibold mb-2">🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}</p>
-                    <WelcomeMessage loginStreak={loginStreak}/>
-                  </div>
+                    {/* <Center mr={10}> */}
+                    <Text mb={4}>
+                      🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}
+                    </Text>
+                    {/* </Center> */}
+                    <WelcomeMessage loginStreak={loginStreak} />
+                  </Container>
 
                   <Heading size="xl">My Habits</Heading>
 
@@ -239,34 +215,44 @@ const App = () => {
                           </EmptyState.Description>
                         </VStack>
                         <ButtonGroup>
-                          <Button onClick={() => navigate("/habits")} colorPalette={"teal"} variant={"surface"}>Add Habits</Button>
+                          <Button onClick={() => navigate("/habits")} colorPalette={"teal"} variant={"surface"}>
+                            Add Habits
+                          </Button>
                         </ButtonGroup>
                       </EmptyState.Content>
                     </EmptyState.Root>
                   ) : (
-                    <ul className="space-y-3">
+                    <Container mx="auto">
                       {habits.map((habit) => (
-                        <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
-                          <span>{habit.name}</span>
-                          <label className="flex items-center space-x-2 text-red-600">
-                            <input
-                              type="checkbox"
-                              checked={habit.complete}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  markComplete(habit.id);
-                                } else {
-                                  markInComplete(habit.id);
-                                }
-                              }}
-                            />
-                            {/* <span>Complete</span> */}
-                          </label>
-                        </li>
+                        <Stack key={habit.id}>
+                          <Card.Root w={"100%"} mt={2}>
+                            <Card.Body py="2">
+                              <Stack direction={"row"}>
+                                <Flex justify="space-between" align="center" w="100%">
+                                  <span>{habit.name}</span>
+                                  <label className="flex items-center space-x-2 text-red-600">
+                                    <input
+                                      type="checkbox"
+                                      checked={habit.complete}
+                                      onChange={(e) => {
+                                        if (e.target.checked) {
+                                          markComplete(habit.id);
+                                        } else {
+                                          markInComplete(habit.id);
+                                        }
+                                      }}
+                                    />
+                                  </label>
+                                </Flex>
+                              </Stack>
+                            </Card.Body>
+                          </Card.Root>
+                        </Stack>
                       ))}
-                    </ul>
+                    </Container>
                   )}
-                </>
+                </Container>
+              </>
               }
             />
             <Route path="/dashboard" element={<Dashboard />} />

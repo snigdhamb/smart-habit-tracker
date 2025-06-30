@@ -9,6 +9,16 @@ import {
   setDoc,
   deleteDoc,
 } from "firebase/firestore";
+import { NavBar } from "@/components/NavBar";
+
+//ui
+import { Center, Container, Heading, Button, Input, Stack, EmptyState, VStack, IconButton, Flex, Text, HStack, Editable, Card } from "@chakra-ui/react";
+
+// icons
+import { ImFilesEmpty } from "react-icons/im";
+import { FaRegTrashCan } from "react-icons/fa6";
+import { AiTwotoneEdit } from "react-icons/ai";
+import { LuCheck, LuX } from "react-icons/lu";
 
 interface Habit {
   id: string;
@@ -75,6 +85,12 @@ const Habits = () => {
     setHabitName("");
     setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
   };
+
+  const cancelUpdate = async () => {
+    if (!user || !editText.trim()) return;
+    setEditingId(null);
+    setEditText("");
+  }
 
   const updateHabit = async (id: string) => {
     if (!user || !editText.trim()) return;
@@ -149,63 +165,121 @@ const Habits = () => {
   };
 
   return (
-    <div className="p-10">
-      <h2 className="text-2xl font-bold mb-6">Your Habits</h2>
+    <>
+      <NavBar />
+      <Container pl={20}>
+        <div className="p-10">
+          <Center mb={20}>
+            <Heading size={"3xl"}>Habits</Heading>
+          </Center>
 
-      <div className="mb-4 flex gap-3">
-        <input
-          type="text"
-          placeholder="Enter new habit"
-          className="border rounded p-2 w-64"
-          value={habitName}
-          onChange={(e) => setHabitName(e.target.value)}
-        />
-        <button onClick={addHabit} className="bg-blue-600 text-white px-4 py-2 rounded">
-          Add Habit
-        </button>
-      </div>
-
-      <ul className="space-y-3">
-        {habits.map((habit) => (
-          <li key={habit.id} className="flex justify-between items-center p-4 border rounded bg-blue-100 hover:bg-blue-200 transition">
-            {editingId === habit.id ? (
-              <div className="flex gap-2 w-full">
-                <input
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="border rounded p-1 w-full"
+          {habits.length === 0 ? (
+            <Container maxW="2xl">
+              <Center><Stack direction={"row"} mt={10} mb={10}>
+                <Input
+                  w={400}
+                  placeholder="Enter new habit"
+                  value={habitName}
+                  onChange={(e) => setHabitName(e.target.value)}
                 />
-                <button onClick={() => updateHabit(habit.id)} className="bg-green-600 text-white px-2 py-1 rounded">
-                  Save
-                </button>
-              </div>
-            ) : (
-              <>
-                <span>{habit.name}</span>
-                <div className="space-x-3">
-                  <button onClick={() => { setEditingId(habit.id); setEditText(habit.name); }} className="text-blue-600">
-                    Edit
-                  </button>
-                  <button onClick={() => deleteHabit(habit.id)} className="text-red-600">
-                    Remove
-                  </button>
-                </div>
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+                <Button onClick={addHabit} bgColor={"navy"}>
+                  Add Habit
+                </Button>
+              </Stack></Center>
+              <EmptyState.Root mt={50}>
+                <EmptyState.Content>
+                  <EmptyState.Indicator>
+                    <ImFilesEmpty />
+                  </EmptyState.Indicator>
+                  <VStack textAlign="center">
+                    <EmptyState.Title>You're not currently tracking any habits</EmptyState.Title>
+                    <EmptyState.Description>
+                      Add some above or utilize our habit generator to support your goals
+                    </EmptyState.Description>
+                  </VStack>
+                    <Button
+                      onClick={() => navigate("/generate-habits")}
+                      bgColor={"selectiveYellow"}
+                      size={"xs"}
+                      fontSize={15}
+                    >
+                      Generate Habits
+                    </Button>
+                </EmptyState.Content>
+              </EmptyState.Root>
+            </Container>
+          ) : (
+            <Container maxW="2xl"  >
+              <Center><Stack direction={"row"} mt={10} mb={10}>
+                <Input
+                  w={400}
+                  placeholder="Enter new habit"
+                  value={habitName}
+                  onChange={(e) => setHabitName(e.target.value)}
+                />
+                <Button onClick={addHabit} bgColor={"navy"}>
+                  Add Habit
+                </Button>
+              </Stack></Center>
 
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={() => navigate("/generate-habits")}
-          className="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700"
-        >
-          Generate more habits that align with your goals
-        </button>
-      </div>
-      
-    </div>
+                <Container mx="auto">
+                {habits.map((habit) => (
+                  <Stack key={habit.id}>
+                    {editingId === habit.id ? (
+                      <div className="flex gap-2 w-full">
+                        <Input
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          className="border rounded p-1 w-full"
+                        />
+                        <IconButton onClick={() => updateHabit(habit.id)} size={"xs"} color={"midnightGreen"}>
+                          <LuCheck />
+                        </IconButton>
+                        <IconButton onClick={() => cancelUpdate()} size={"xs"} color={"midnightGreen"}>
+                          <LuX />
+                        </IconButton>
+                      </div>
+                    ) : (
+                      <Card.Root w={"100%"} mt={2}>
+                        <Card.Body py="2">
+                          <Stack direction={"row"}>
+                            <Flex justify="space-between" align="center" w="100%">
+                              <Text>{habit.name}</Text>
+                              <HStack>
+                                <IconButton onClick={() => { setEditingId(habit.id); setEditText(habit.name); }} color="navy" size="sm" aria-label="Edit habit">
+                                  <AiTwotoneEdit />
+                                </IconButton>
+                                <IconButton size="sm" onClick={() => deleteHabit(habit.id)} color="rust" aria-label="Delete habit">
+                                  <FaRegTrashCan />
+                                </IconButton>
+                              </HStack>
+                            </Flex>
+                          </Stack>
+                        </Card.Body>
+                      </Card.Root>
+                    )}
+                  </Stack>
+                ))}
+                </Container>
+
+                <Center>
+                  <Button
+                    onClick={() => navigate("/generate-habits")}
+                    bgColor={"selectiveYellow"}
+                    size={"sm"}
+                    fontSize={15}
+                    mt={20}
+                  >
+                    Generate habits that align with your goals
+                  </Button>
+                </Center>
+              {/* </ul> */}
+            </Container>
+          )}
+          
+        </div>
+      </Container>
+    </>
   );
 };
 
