@@ -125,17 +125,11 @@ const App = () => {
       complete: true,
       modifiedAt: new Date(),
     });
-    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name,
-        complete: data.complete,
-        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
-        modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
-      };
-    }));
+    setHabits(prev =>
+      prev.map(habit =>
+        habit.id === id ? { ...habit, complete: true, modifiedAt: new Date() } : habit
+      )
+    );
   };
 
   const markInComplete = async (id: string) => {
@@ -144,17 +138,11 @@ const App = () => {
       complete: false,
       modifiedAt: new Date(),
     });
-    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-    setHabits(snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name,
-        complete: data.complete,
-        createdAt: data.createdAt?.toDate?.() || new Date(data.createdAt),
-        modifiedAt: data.modifiedAt?.toDate?.() || new Date(data.modifiedAt ?? Date.now()),
-      };
-    }));
+    setHabits(prev =>
+      prev.map(habit =>
+        habit.id === id ? { ...habit, complete: false, modifiedAt: new Date() } : habit
+      )
+    );
   };
 
   if (!user) {

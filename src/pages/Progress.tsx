@@ -4,10 +4,10 @@ import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
 import CalendarHeatmap from 'react-calendar-heatmap';
 import "react-calendar-heatmap/dist/styles.css";
-import { addMonths, subMonths, startOfMonth, endOfMonth, format } from "date-fns";
+import { addMonths, subMonths, startOfMonth, endOfMonth, format, startOfWeek, endOfWeek } from "date-fns";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from 'chart.js';
-import { Heading, Container, Center } from "@chakra-ui/react";
+import { Heading, Container, Center, Stack } from "@chakra-ui/react";
 import { NavBar } from "@/components/NavBar";
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
@@ -54,45 +54,54 @@ const Dashboard = () => {
     fetchData();
   }, [userId]);
 
-  // Linechart Stuff
-  const dayTotals = Array(7).fill(0);
-  const dayCompletions = Array(7).fill(0);
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-  entries.forEach((entry) => {
-    if (filter && entry.habitName !== filter) return;
-    const day = new Date(entry.date).getDay(); // 0 = Sunday, 6 = Saturday
-    dayTotals[day]++;
-    if (entry.complete) dayCompletions[day]++;
+  // Weekly Completion Chart (Monday–Sunday)
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekStartDate = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const weeklyData = Array(7).fill(null).map((_, idx) => {
+    const date = new Date(weekStartDate);
+    date.setDate(date.getDate() + idx);
+    const isoDate = date.toISOString().split("T")[0];
+    const entriesForDate = entries.filter(entry => entry.date === isoDate && (!filter || entry.habitName === filter));
+    const total = entriesForDate.length;
+    const complete = entriesForDate.filter(e => e.complete).length;
+    return {
+      label: weekDays[idx],
+      percent: total === 0 ? 0 : (complete / total) * 100,
+    };
   });
 
-  const weeklyCompletionRates = dayTotals.map((total, idx) =>
-    total === 0 ? 0 : dayCompletions[idx] / total
-  );
-
   const weeklyChartData = {
-    labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+    labels: weeklyData.map(d => d.label),
     datasets: [
       {
-        label: '',
-        data: weeklyCompletionRates.map((v) => parseFloat((v * 100).toFixed(1))),
+        label: 'Completion %',
+        data: weeklyData.map(d => d.percent),
         borderColor: 'rgb(75, 192, 192)',
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         tension: 0.3,
       },
     ],
   };
-  
-const chartOptions = {
-  scales: {
-    y: {
-      ticks: {
-        callback: function (value: number | string) {
-          return `${value}%`;
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        min: 0,
+        max: 100,
+        ticks: {
+          callback: function (value: number | string) {
+            return `${value}%`;
+          },
         },
       },
     },
-  },
-};
+  };
 
   // Heatmap Stuff 
   const dateCompletionMap = entries.reduce((acc, entry) => {
@@ -121,12 +130,12 @@ const chartOptions = {
           <Heading size={"3xl"}>Progress</Heading>
         </Center>
         {/* Weekly Completion Line Chart */}
-        <div className="mt-6">
-          <div className="flex justify-center">
-            <h3 className="text-lg font-semibold mb-2">This Week's Progress</h3>
-          </div>
-          <Line data={weeklyChartData} options={chartOptions}/>
-        </div>
+        <Stack>
+            <Heading size={"xl"}>This Week's Completion Rate</Heading>
+          <Container style={{ height: '250px', width: '500px'}}>
+            <Line data={weeklyChartData} options={chartOptions} />
+          </Container>
+        </Stack>
         <style>{`
           .color-empty { fill: #eee; }
           .color-scale-1 { fill:rgb(255, 169, 175); }
@@ -138,7 +147,7 @@ const chartOptions = {
 
         {/* Heatmap */}
         <div className="flex justify-center">
-          <h3 className="text-lg font-semibold mb-2">Daily Activity</h3>
+          <Heading size={"xl"}>Daily Activity</Heading>
         </div>
         <select
           className="border p-2 mb-4"
