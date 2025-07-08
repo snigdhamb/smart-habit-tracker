@@ -1,6 +1,6 @@
 // src/pages/About.tsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Text, Heading, Container, Center, Stack, Em, For } from "@chakra-ui/react";
+import { Heading, Container, Center, Stack, Em, For } from "@chakra-ui/react";
 import { Prose } from "@/components/ui/prose";
 import { NavBar } from "@/components/NavBar";
 import Contact from "./Contact";

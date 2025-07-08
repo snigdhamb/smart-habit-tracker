@@ -28,8 +28,8 @@ const GenerateHabits: React.FC = () => {
   const [error, setError] = useState('');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [showDialog, setShowDialog] = useState(false);
-  const [showDelayAlert, setShowDelayAlert] = useState(false); // obsolete, will remove
-  const [alertVisible, setAlertVisible] = useState(false); // obsolete, will remove
+  // const [showDelayAlert, setShowDelayAlert] = useState(false); // obsolete, will remove
+  // const [alertVisible, setAlertVisible] = useState(false); // obsolete, will remove
   const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
   const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
@@ -40,10 +40,10 @@ const GenerateHabits: React.FC = () => {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
   `;
-  const fadeOut = keyframes`
-    from { opacity: 1; }
-    to { opacity: 0; }
-  `;
+  // const fadeOut = keyframes`
+  //   from { opacity: 1; }
+  //   to { opacity: 0; }
+  // `;
 
   const addHabit = async (name: string) => {
     if (!user || !name.trim()) return;

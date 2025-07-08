@@ -25,7 +25,7 @@ interface HabitEntry {
 const Dashboard = () => {
   const [entries, setEntries] = useState<HabitEntry[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
-  const [filter, setFilter] = useState("");
+  const [filter] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [habitNames, setHabitNames] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
