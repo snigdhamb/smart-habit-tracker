@@ -57,10 +57,10 @@ const App = () => {
     from { opacity: 0; transform: translateX(-10px); }
     to { opacity: 1; transform: translateY(0); }
   `;
-  const fadeIn = keyframes`
-    from { opacity: 0; }
-    to { opacity: 1; }
-  `;
+  // const fadeIn = keyframes`
+  //   from { opacity: 0; }
+  //   to { opacity: 1; }
+  // `;
 
   <Router></Router>;
 
@@ -82,18 +82,20 @@ const App = () => {
           if (diff === 1) {
             newStreak += 1;
           } else if (diff > 1) {
-            newStreak = 1;const slideDown = keyframes`
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  `;
-  const slideRight = keyframes`
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  `;
-  const fadeIn = keyframes`
-    from { opacity: 0; }
-    to { opacity: 1; }
-  `;
+            newStreak = 1;
+            
+  // const slideDown = keyframes`
+  //   from { opacity: 0; transform: translateY(10px); }
+  //   to { opacity: 1; transform: translateY(0); }
+  // `;
+  // const slideRight = keyframes`
+  //   from { opacity: 0; transform: translateX(-10px); }
+  //   to { opacity: 1; transform: translateY(0); }
+  // `;
+  // const fadeIn = keyframes`
+  //   from { opacity: 0; }
+  //   to { opacity: 1; }
+  // `;
 
           }
           await updateDoc(userDocRef, {
