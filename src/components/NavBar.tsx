@@ -20,21 +20,11 @@ export const NavBar = () => {
   })
   
   const [user, setUser] = useState<User | null>(null);
-//   const [loginStreak, setLoginStreak] = useState<number>(0);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
         setUser(currentUser);
-        // if (currentUser) {
-        //     const userDocRef = doc(db, "users", currentUser.uid);
-        //     const userDocSnap = await getDoc(userDocRef);
-        //     if (userDocSnap.exists()) {
-        //         const userData = userDocSnap.data();
-        //         let streak = userData.loginStreak;
-        //         setLoginStreak(streak);
-        //     }
-        // }
     });
     return () => unsubscribe();
   }, []);
@@ -44,7 +34,7 @@ export const NavBar = () => {
         <Routes>
             <Route path="/settings" element={<Settings />} />
         </Routes>
-        <Container >
+        <Container mt={2} mb={8}>
             <Flex justify="flex-end">
                 <Stack direction={"row"} h="13" gap={12}>
                     <Center>

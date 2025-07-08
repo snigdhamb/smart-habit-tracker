@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { db, auth } from "../firebase/firebase";
 import {
   doc,
@@ -7,7 +7,10 @@ import {
 import { useNavigate } from "react-router-dom";
 import { NavBar } from '@/components/NavBar';
 
-import { Heading, Container, Center, Input, Button, ProgressCircle, Stack, Wrap, Dialog } from '@chakra-ui/react';
+import { Heading, Container, Center, Input, Button, ProgressCircle, Stack, Wrap, Dialog, Alert, Em} from '@chakra-ui/react';
+
+import { keyframes } from '@emotion/react';
+
 
 interface Habit {
   id: string;
@@ -25,9 +28,22 @@ const GenerateHabits: React.FC = () => {
   const [error, setError] = useState('');
   const [habits, setHabits] = useState<Habit[]>([]);
   const [showDialog, setShowDialog] = useState(false);
+  const [showDelayAlert, setShowDelayAlert] = useState(false); // obsolete, will remove
+  const [alertVisible, setAlertVisible] = useState(false); // obsolete, will remove
+  const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   const user = auth.currentUser;
   const navigate = useNavigate();
+
+  const slideDown = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+  const fadeOut = keyframes`
+    from { opacity: 1; }
+    to { opacity: 0; }
+  `;
 
   const addHabit = async (name: string) => {
     if (!user || !name.trim()) return;
@@ -63,6 +79,26 @@ const GenerateHabits: React.FC = () => {
 
     setLoading(true);
     setError('');
+    setLoadingMessage(null);
+    // Clear any previous timeouts
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+    // Stage loading messages
+    timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage("Building a plan that fits your goals…");
+    }, 2000));
+    timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage(null);
+    }, 4000));
+    timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage("Fine-tuning your habit blueprint…");
+    }, 5000));
+    timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage(null);
+    }, 7000));
+    timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage("Just a moment more…");
+    }, 8000));
     try {
       const response = await fetch('https://habit-generator.onrender.com/generate-habits', {
         method: 'POST',
@@ -75,13 +111,18 @@ const GenerateHabits: React.FC = () => {
       if (!response.ok) throw new Error('Failed to fetch habits');
 
       const data = await response.json();
-      console.log(data);
       setSuggestions(data.habits); // Assumes API returns { habits: [...] }
+      // Clear all timeouts and hide loading messages
+      timeoutsRef.current.forEach(clearTimeout);
+      setLoadingMessage(null);
     } catch (err) {
-        console.error('API error:', err);
-        setError('Error generating habits. Please try again.');
-      } finally {
+      console.error('API error:', err);
+      setError('Error generating habits. Please try again.');
+      timeoutsRef.current.forEach(clearTimeout);
+      setLoadingMessage(null);
+    } finally {
       setLoading(false);
+      timeoutsRef.current.forEach(clearTimeout);
     }
   };
 
@@ -103,6 +144,46 @@ const GenerateHabits: React.FC = () => {
     navigate("/");
   };
 
+  // TEMPORARY: Developer utility to seed mock habits for July 1–6, 2025
+  // const seedMockHabits = async () => {
+  //   if (!user) return;
+
+  //   const baseHabits = [
+  //     "do ten pushups daily",
+  //     "drink eight glasses of water",
+  //     "go to bed before eleven pm",
+  //     "meditate for five minutes",
+  //     "walk at least thirty minutes"
+  //   ];
+
+  //   const start = new Date("2025-07-01");
+  //   for (let day = 0; day < 7; day++) {
+  //     const date = new Date(start);
+  //     date.setDate(start.getDate() + day);
+  //     const numComplete = Math.floor(Math.random() * 3) + 3; // 3 to 5
+  //     const selected = baseHabits
+  //       .map(habit => ({ habit, sort: Math.random() }))
+  //       .sort((a, b) => a.sort - b.sort)
+  //       .slice(0, numComplete)
+  //       .map(obj => obj.habit);
+
+  //     for (let habitName of baseHabits) {
+  //       const id = `${habitName.replace(/\s+/g, "-")}-${date.toISOString().split("T")[0]}-${Date.now()}`;
+  //       const complete = selected.includes(habitName);
+  //       const habit = {
+  //         name: habitName,
+  //         active: true,
+  //         complete,
+  //         createdAt: date,
+  //         modifiedAt: date,
+  //       };
+  //       await setDoc(doc(db, "users", user.uid, "habits", id), habit);
+  //     }
+  //   }
+
+  //   alert("Mock habits generated from July 1–6, 2025");
+  // };
+
   return (
     <>
       <NavBar />
@@ -110,10 +191,10 @@ const GenerateHabits: React.FC = () => {
       <Container maxW="6xl">
         
         <Center mb={20}>
-          <Heading size={"3xl"}>Generate Habits</Heading>
+          <Heading size={"3xl"} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards">Generate Habits</Heading>
         </Center>
 
-        <Stack direction={"row"} mb={10}>
+        <Stack direction={"row"} mb={10} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.2s"}>
           <Input
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
@@ -139,6 +220,22 @@ const GenerateHabits: React.FC = () => {
 
         {error && <p className="text-red-500 mt-2">{error}</p>}
 
+        {loadingMessage && (
+          <Center mt={4}>
+            <Alert.Root
+              status="info"
+              width="xs"
+              animation={`${slideDown} 0.3s ease-out`}
+              animationFillMode="forwards"
+            >
+              <Alert.Indicator />
+              <Em>
+                <Alert.Title>{loadingMessage}</Alert.Title>
+              </Em>
+            </Alert.Root>
+          </Center>
+        )}
+
         <Wrap gap="4">
           {suggestions.map((suggestion, idx) => {
             const selected = selectedHabits.has(suggestion.trim());
@@ -149,10 +246,13 @@ const GenerateHabits: React.FC = () => {
                 bgColor={selected ? 'navy' : 'blueGray'}
                 color="white"
                 _hover={{ bg: selected ? 'navy' : 'blueGray' }}
+                animation={`${slideDown} 0.3s ease-out`}
+                animationFillMode="forwards"
+                opacity={0}
+                style={{ animationDelay: `${idx * 0.1}s` }}
               >
                 {suggestion}
               </Button>
-              
             );
           })}
         </Wrap>
@@ -161,6 +261,7 @@ const GenerateHabits: React.FC = () => {
             onClick={handleContinue}
             bgColor={"rust"}
             mt={20}
+            animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.4s"}
           >
             Continue
           </Button>
@@ -184,6 +285,11 @@ const GenerateHabits: React.FC = () => {
             </Dialog.Content>
           </Dialog.Positioner>
         </Dialog.Root>
+        {/* <Center mt={10}>
+          <Button onClick={seedMockHabits} bgColor="midnightGreen">
+            Generate Mock Habits
+          </Button>
+        </Center> */}
       </Container>
     </>
   );

@@ -12,6 +12,8 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import { WelcomeMessage } from "./components/WelcomeMessage";
 import { NavBar } from "./components/NavBar";
+import { keyframes } from '@emotion/react';
+import { useSpring, animated } from 'react-spring';
 
 import {
   collection,
@@ -24,9 +26,10 @@ import {
 
 /* UI Imports */
 import { HiColorSwatch } from "react-icons/hi";
-import { Heading, Center, Highlight, Button, ButtonGroup, EmptyState, VStack, Container, Stack, Card, Flex, Text} from "@chakra-ui/react";
+import { Heading, Center, Highlight, Button, ButtonGroup, EmptyState, VStack, Container, Stack, Card, Flex, Text, For, Box} from "@chakra-ui/react";
 import SignIn from "./pages/SignIn";
 import Sidebar from "./components/SideBar";
+import { FaFire } from "react-icons/fa6";
 
 interface Habit {
   id: string;
@@ -38,10 +41,26 @@ interface Habit {
 
 const App = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [habitsLoaded, setHabitsLoaded] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [loginStreak, setLoginStreak] = useState<number>(0);
+  const [loginStreakLoaded, setLoginStreakLoaded] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const slideDown = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+  const slideRight = keyframes`
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+  const fadeIn = keyframes`
+    from { opacity: 0; }
+    to { opacity: 1; }
+  `;
 
   <Router></Router>;
 
@@ -63,20 +82,36 @@ const App = () => {
           if (diff === 1) {
             newStreak += 1;
           } else if (diff > 1) {
-            newStreak = 1;
+            newStreak = 1;const slideDown = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+  const slideRight = keyframes`
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+  const fadeIn = keyframes`
+    from { opacity: 0; }
+    to { opacity: 1; }
+  `;
+
           }
           await updateDoc(userDocRef, {
+            displayName: currentUser.displayName || "",
             lastLogin: new Date(),
             loginStreak: newStreak,
           });
           setLoginStreak(newStreak);
+          setLoginStreakLoaded(true);
         } else {
           isNewUser = true;
           await setDoc(userDocRef, {
+            displayName: currentUser.displayName || "",
             lastLogin: new Date(),
             loginStreak: 1,
           });
           setLoginStreak(1);
+          setLoginStreakLoaded(true);
         }
       }
       if (isNewUser) {
@@ -115,6 +150,7 @@ const App = () => {
           );
         });
       setHabits(filtered);
+      setHabitsLoaded(true);
     };
     fetchHabits();
   }, [user, location]);
@@ -145,6 +181,14 @@ const App = () => {
     );
   };
 
+  const streakSpring = useSpring({
+    from: { number: 0 },
+    to: { number: loginStreak },
+    reset: true,
+    config: { duration: 800 },
+    onRest: () => setInitialLoad(false)
+  });
+
   if (!user) {
     return (
       <SignIn />
@@ -170,7 +214,7 @@ const App = () => {
                   {/* Header section */}
                   <Container mb={10}>
                     <Center mb={10}>
-                      <Heading size="3xl" letterSpacing="tight">
+                      <Heading size="3xl" letterSpacing="tight" animation={`${slideDown} 0.4s ease-out`}  opacity={0} animationFillMode="forwards">
                         <Highlight
                           query={user?.displayName?.split(" ")[0] || "User"}
                           styles={{ color: "teal.600" }}
@@ -180,18 +224,50 @@ const App = () => {
                       </Heading>
                     </Center>
                     {/* <Center mr={10}> */}
-                    <Text mb={4}>
-                      🔥 Login Streak: {loginStreak} day{loginStreak === 1 ? "" : "s"}
-                    </Text>
+                    <Flex align="center" mb={2} animation={`${slideDown} 0.4s ease-out`} opacity={0} animationFillMode="forwards" animationDelay={"0.1s"}>
+                      <FaFire color="orange" size="26px" style={{ marginRight: "10px" }} />
+                      <Text mb={0} fontSize="xl" fontWeight="bold">
+                        Login Streak:{' '}
+                        {loginStreakLoaded ? (
+                          initialLoad ? (
+                            <animated.span>
+                              {streakSpring.number.to((n: number) => `${Math.floor(n)} day${Math.floor(n) === 1 ? '' : 's'}`)}
+                            </animated.span>
+                          ) : (
+                            <span>
+                              {`${loginStreak} day${loginStreak === 1 ? '' : 's'}`}
+                            </span>
+                          )
+                        ) : (
+                          'Counting...'
+                        )}
+                      </Text>
+                    </Flex>
                     {/* </Center> */}
-                    <WelcomeMessage loginStreak={loginStreak} />
+                    <Box minH="60px">
+                      {loginStreakLoaded && (
+                        <Container
+                          animation={`${slideRight} 0.4s ease-out`}
+                          opacity={0}
+                          animationFillMode="forwards"
+                          animationDelay={"0.6s"}
+                        >
+                          <WelcomeMessage loginStreak={loginStreak} />
+                        </Container>
+                      )}
+                    </Box>
                   </Container>
 
-                  <Heading size="xl">My Habits</Heading>
+                  <Heading size="xl"
+                    animation={`${slideDown} 0.4s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.3s"}>
+                    My Habits
+                  </Heading>
 
                   {/* Today's Habits */}
-                  {habits.length === 0 ? (
-                    <EmptyState.Root>
+                  {!habitsLoaded ? (
+                    <></>
+                  ) : habits.length === 0 ? (
+                    <EmptyState.Root animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.1s"}>
                       <EmptyState.Content>
                         <EmptyState.Indicator>
                           <HiColorSwatch />
@@ -211,15 +287,18 @@ const App = () => {
                     </EmptyState.Root>
                   ) : (
                     <Container mx="auto">
-                      {habits.map((habit) => (
+                      {/* {habits.map((habit) => ( */}
+                      <For each={habits}>
+                        {(habit, index) => (
                         <Stack key={habit.id}>
-                          <Card.Root w={"100%"} mt={2}>
+                          <Card.Root w={"100%"} mt={2}
+                            animation={`${slideDown} 0.4s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={`${0.15 * index + 0.3}s`}>
                             <Card.Body py="2">
                               <Stack direction={"row"}>
-                                <Flex justify="space-between" align="center" w="100%">
+                                <Flex justify="space-between" align="center" w="100%" >
                                   <span>{habit.name}</span>
                                   <label className="flex items-center space-x-2 text-red-600">
-                                    <input
+                                    <input  
                                       type="checkbox"
                                       checked={habit.complete}
                                       onChange={(e) => {
@@ -236,7 +315,9 @@ const App = () => {
                             </Card.Body>
                           </Card.Root>
                         </Stack>
-                      ))}
+                      )}
+                      </For>
+                      {/* ))} */}
                     </Container>
                   )}
                 </Container>

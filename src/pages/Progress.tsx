@@ -2,13 +2,18 @@ import { useEffect, useState } from "react";
 import { db, auth } from "../firebase/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, getDocs } from "firebase/firestore";
-import CalendarHeatmap from 'react-calendar-heatmap';
-import "react-calendar-heatmap/dist/styles.css";
-import { addMonths, subMonths, startOfMonth, endOfMonth, format, startOfWeek, endOfWeek } from "date-fns";
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
+import { format, startOfWeek } from "date-fns";
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend } from 'chart.js';
-import { Heading, Container, Center, Stack } from "@chakra-ui/react";
+import { Heading, Container, Center, Stack, Grid, GridItem, Alert, For, Flex, ProgressCircle, AbsoluteCenter, Box } from "@chakra-ui/react";
 import { NavBar } from "@/components/NavBar";
+import { keyframes } from '@emotion/react';
+import { FaRegCircleCheck, FaRegCircleXmark } from "react-icons/fa6";
+
+
+
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Legend);
 
 interface HabitEntry {
@@ -23,6 +28,13 @@ const Dashboard = () => {
   const [filter, setFilter] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [habitNames, setHabitNames] = useState<string[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  const slideDown = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -41,7 +53,7 @@ const Dashboard = () => {
       const data: HabitEntry[] = snapshot.docs.map((doc) => {
         const d = doc.data();
         return {
-          date: new Date(d.createdAt?.toDate?.() || d.createdAt).toISOString().split("T")[0],
+          date: format(new Date(d.createdAt?.toDate?.() || d.createdAt), 'yyyy-MM-dd'),
           habitName: d.name,
           complete: d.complete,
         };
@@ -54,11 +66,24 @@ const Dashboard = () => {
     fetchData();
   }, [userId]);
 
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  // Consistency Score and Best/Worst Habit
+  const totalEntries = entries.length;
+  const completedEntries = entries.filter(e => e.complete).length;
+  const consistencyScore = totalEntries === 0 ? 0 : (completedEntries / totalEntries) * 100;
+
+  const habitStats = habitNames.map(name => {
+    const habitEntries = entries.filter(e => e.habitName === name);
+    const total = habitEntries.length;
+    const complete = habitEntries.filter(e => e.complete).length;
+    const percent = total === 0 ? 0 : (complete / total) * 100;
+    return { name, percent };
+  });
+  const sortedHabits = [...habitStats].sort((a, b) => b.percent - a.percent);
+  const bestHabit = sortedHabits[0]?.name || 'N/A';
+  const worstHabit = sortedHabits[sortedHabits.length - 1]?.name || 'N/A';
 
   // Weekly Completion Chart (Monday–Sunday)
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const weekStartDate = startOfWeek(new Date(), { weekStartsOn: 1 });
 
   const weeklyData = Array(7).fill(null).map((_, idx) => {
@@ -112,87 +137,164 @@ const Dashboard = () => {
     return acc;
   }, {} as Record<string, { total: number; complete: number }>);
 
-  const heatmapValues = Object.keys(dateCompletionMap)
-    .filter((date) => {
-      const d = new Date(date);
-      return d >= startOfMonth(currentMonth) && d <= endOfMonth(currentMonth);
-    })
-    .map((date) => ({
-      date,
-      count: dateCompletionMap[date].complete / dateCompletionMap[date].total,
-    }));
+  const getTileClassName = ({ date }: { date: Date }) => {
+    const isoDate = date.toISOString().split("T")[0];
+    const data = dateCompletionMap[isoDate];
+    if (!data) return "color-empty";
+    const ratio = data.complete / data.total;
+    // if (ratio === 0) return "color-scale-1";
+    if (ratio < 0.20) return "color-scale-1";
+    if (ratio < 0.50) return "color-scale-2";
+    if (ratio < 0.75) return "color-scale-3";
+    return "color-scale-4";
+  };
+
+  const habitsForSelectedDate = selectedDate
+    ? entries.filter(entry => entry.date === selectedDate.toISOString().split("T")[0])
+    : [];
 
   return (
-    <div className="p-8">
+    <div className="p-8" style={{ height: '100vh', overflowY: 'auto' }}>
       <NavBar />
       <Container pl={20}>
         <Center mb={10}>
-          <Heading size={"3xl"}>Progress</Heading>
+          <Heading size={"3xl"} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" mb={10}>
+            Dashboard
+          </Heading>
         </Center>
-        {/* Weekly Completion Line Chart */}
-        <Stack>
-            <Heading size={"xl"}>This Week's Completion Rate</Heading>
-          <Container style={{ height: '250px', width: '500px'}}>
-            <Line data={weeklyChartData} options={chartOptions} />
-          </Container>
-        </Stack>
-        <style>{`
-          .color-empty { fill: #eee; }
-          .color-scale-1 { fill:rgb(255, 169, 175); }
-          .color-scale-2 { fill:rgb(255, 186, 112); }
-          .color-scale-3 { fill:rgb(200, 236, 132); }
-          .color-scale-4 { fill:rgb(100, 194, 134); }
-          .color-scale-5 { fill:rgb(47, 128, 77); }
-        `}</style>
 
-        {/* Heatmap */}
-        <div className="flex justify-center">
-          <Heading size={"xl"}>Daily Activity</Heading>
-        </div>
-        <select
-          className="border p-2 mb-4"
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-        >
-          <option value="">All Habits</option>
-          {habitNames.map((name, idx) => (
-            <option key={idx} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-        <div className="flex items-center justify-between mb-2">
-          <button onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>← Prev</button>
-          <span className="font-semibold">{format(currentMonth, "MMMM yyyy")}</span>
-          <button onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>Next →</button>
-        </div>
-        <CalendarHeatmap
-          startDate={startOfMonth(currentMonth)}
-          endDate={endOfMonth(currentMonth)}
-          values={heatmapValues}
-          classForValue={(value) => {
-            if (!value) return "color-empty";
-            const ratio = value.count || 0;
-            if (ratio === 0) return "color-scale-1";
-            if (ratio < 0.25) return "color-scale-2";
-            if (ratio < 0.50) return "color-scale-3";
-            if (ratio < 0.75) return "color-scale-4";
-            return "color-scale-5";
-          }}
-          tooltipDataAttrs={(value) => ({
-            "data-tip": `${value.date}: ${((value.count || 0) * 100).toFixed(0)}% complete`,
-          })}
-          // showWeekdayLabels
-        />
+        <Grid templateColumns="repeat(12, 1fr)" rowGap={20} mb={20}>
+          <GridItem colSpan={[6, 6]}>
+            <Flex align="center" gap={6} justify="flex-start">
+              <Heading size="lg" whiteSpace="nowrap" 
+                animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.1s"}>
+                  Overall Consistency:
+              </Heading>
+              <ProgressCircle.Root
+                size="xl"
+                value={consistencyScore}
+                colorPalette={
+                  consistencyScore > 79 ? "green" :
+                  consistencyScore > 59 ? "teal" :
+                  consistencyScore > 39 ? "yellow" :
+                  "red"
+                }
+                animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.1s"}
+              >
+                <ProgressCircle.Circle>
+                  <ProgressCircle.Track />
+                  <ProgressCircle.Range />
+                </ProgressCircle.Circle>
+                <AbsoluteCenter>
+                  <ProgressCircle.ValueText fontSize="xl" fontWeight="bold" />
+                </AbsoluteCenter>
+              </ProgressCircle.Root>
+            </Flex>
+          </GridItem>
+
+          <GridItem colSpan={[12, 6]}>
+            <Container
+              bg="gray.50" p={6} borderRadius="lg" boxShadow="md"
+              animation={`${slideDown} 0.3s ease-out`} opacity={0}
+              animationFillMode="forwards" animationDelay={"0.2s"}
+            >
+              <Heading size="md" mb={4}>Habit Performance</Heading>
+              <Stack gap={3}>
+                <Flex align="center" gap={3}>
+                  <FaRegCircleCheck color="green" />
+                  <strong>Best:</strong> {bestHabit}
+                </Flex>
+                <Flex align="center" gap={3}>
+                  <FaRegCircleXmark color="red" />
+                  <strong>Worst:</strong> {worstHabit}
+                </Flex>
+              </Stack>
+            </Container>
+          </GridItem>
+
+          <GridItem colSpan={[12, 6]}>
+            <Heading size="lg" mb={2}
+              animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.2s"}>
+              Calendar View
+            </Heading>
+            <Container animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.3s"}>
+              <Calendar
+                value={currentMonth}
+                onChange={(value) => {
+                  if (value instanceof Date) {
+                    setSelectedDate(value);
+                    setCurrentMonth(value);
+                  }
+                }}
+                tileClassName={getTileClassName}
+              />
+            </Container>
+            <Box mt={4} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.4s"}>
+              {selectedDate ? (
+                <Stack>
+                  <Heading size="md">
+                    {selectedDate.toLocaleDateString(undefined, {
+                      weekday: 'long',
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}:
+                  </Heading>
+                  <Stack key={selectedDate?.toISOString()}>
+                    <For each={habitsForSelectedDate}>
+                      {(entry, index) => (
+                        <Flex
+                          key={entry.habitName}
+                          gap={8}
+                          align="center"
+                          animation={`${slideDown} 0.3s ease-out`}
+                          animationFillMode="forwards"
+                          animationDelay={`${0.1 * index}s`}
+                          opacity={0}
+                        >
+                          {entry.complete ? <FaRegCircleCheck color="green" /> : <FaRegCircleXmark color="red" />}
+                          {entry.habitName}
+                        </Flex>
+                      )}
+                    </For>
+                  </Stack>
+                </Stack>
+              ) : (
+                <Alert.Root w={"80%"}>
+                  <Alert.Indicator />
+                  <Alert.Content>
+                    <Alert.Title>Snapshot</Alert.Title>
+                    <Alert.Description>Select a date on the calendar to see your habit completion for that day</Alert.Description>
+                  </Alert.Content>
+                </Alert.Root>
+              )}
+            </Box>
+          </GridItem>
+
+          <GridItem colSpan={[12, 6]}>
+            <Heading size="lg" mb={2} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.3s"}>
+              This Week's Completion Rate
+            </Heading>
+            <Box width="100%" height="400px" animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.4s"}>
+              <Line data={weeklyChartData} options={chartOptions} />
+            </Box>
+          </GridItem>
+        </Grid>
+
+
+        
         <style>{`
-          .color-empty { fill: #eee; }
-          .color-scale-1 { fill:rgb(249, 142, 121); }
-          .color-scale-2 { fill:rgb(123, 199, 151); }
-          .color-scale-3 { fill:rgb(79, 166, 111); }
-          .color-scale-4 { fill:rgb(39, 130, 72); }
-          .color-scale-5 { fill:rgb(9, 88, 38); }
+          .color-empty { background: ; }
+          .color-scale-1 { background: rgb(253, 148, 138); }
+          .color-scale-2 { background: rgb(250, 153, 117); }
+          .color-scale-3 { background: rgb(123, 212, 126); }
+          .color-scale-4 { background: rgb(75, 166, 108); }
+          .react-calendar__tile:hover {
+            background-color: #cce4ff !important;
+          }
         `}</style>
       </Container>
+      
     </div>
   );
 };

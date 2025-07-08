@@ -1,22 +1,50 @@
 // src/pages/About.tsx
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Heading } from "@chakra-ui/react";
+import { Heading, Text, Container, Center } from "@chakra-ui/react";
+import { useState, useEffect } from "react";
 import { NavBar } from "@/components/NavBar";
 import Contact from "./Contact";
+import About from "./About";
+import { doc, updateDoc, getDoc } from "firebase/firestore";
+import { db, auth } from "@/firebase/firebase";
+import { keyframes } from '@emotion/react';
 
-export default function About() {
-  <Router></Router>;
+export default function Settings() {
+  const [displayName, setDisplayName] = useState("");
+
+  const slideDown = keyframes`
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  `;
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      const userRef = doc(db, "users", user.uid);
+      (async () => {
+        const snap = await getDoc(userRef);
+        if (snap.exists()) {
+          setDisplayName(snap.data().displayName || "");
+        }
+      })();
+    }
+  }, []);
+
   return (
-    <div className="p-12 max-w-xl mx-auto text-center">
-      {/* Top nav */}
+    <>
       <NavBar />
-      
-      <Heading size={"3xl"}>Settings</Heading>
+      <Center>
+        <Heading size={"3xl"}  animation={`${slideDown} 0.4s ease-out`}  opacity={0} animationFillMode="forwards">Settings</Heading>
+      </Center>
+        {/* Top nav */}
+      <Container pl={20}>
+        <Text></Text>
+      </Container>
 
-      <Routes>
-        <Route path="/about" element={<About />}/>
-        <Route path="/contact" element={<Contact />}/>
-      </Routes>
-    </div>
+        <Routes>
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
+        </Routes>
+    </>
   );
 }
