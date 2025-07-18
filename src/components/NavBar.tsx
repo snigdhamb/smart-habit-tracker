@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Avatar, Menu, Portal, Flex, Container, Stack, Center, LinkOverlay, LinkBox, defineStyle } from "@chakra-ui/react"
+import { Avatar, Menu, Portal, Flex, Container, Stack, Center, defineStyle } from "@chakra-ui/react"
 import { Routes, Route, Link, useNavigate } from "react-router-dom"
 import { SignOutButton } from "./AuthButtons";
 import Settings from "@/pages/Settings";
