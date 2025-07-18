@@ -1,6 +1,6 @@
 // src/pages/Onboarding.tsx
 import { useNavigate } from "react-router-dom";
-import { Flex, Center, Box, Em, Image, Card, Heading, Stack, Button } from '@chakra-ui/react';
+import { Flex, Box, Em, Image, Heading, Stack, Button } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 import Logo from '../assets/LogoImage.png';
 

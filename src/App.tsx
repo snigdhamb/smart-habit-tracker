@@ -66,7 +66,7 @@ const App = () => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      let isNewUser = false;
+      // let isNewUser = false;
       setUser(currentUser);
       if (currentUser) {
         const userDocRef = doc(db, "users", currentUser.uid);
@@ -92,7 +92,7 @@ const App = () => {
           setLoginStreak(newStreak);
           setLoginStreakLoaded(true);
         } else {
-          isNewUser = true;
+          // isNewUser = true;
           await setDoc(userDocRef, {
             displayName: currentUser.displayName || "",
             lastLogin: new Date(),
