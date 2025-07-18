@@ -1,5 +1,6 @@
 // src/pages/Contact.tsx
 import { useState } from "react";
+import { ProgressCircle } from '@chakra-ui/react'; // or wherever it comes from
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import About from "./About";
 import { Center, Container, Heading, Card, Stack, Input, Button, Field, Em, Textarea, Alert } from "@chakra-ui/react";import { NavBar } from "@/components/NavBar";
@@ -10,7 +11,8 @@ export default function Contact() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
-    const [alertStatus, setAlertStatus] = useState<"success" | "error" | null>(null);
+  const [alertStatus, setAlertStatus] = useState<"success" | "error" | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const isFormComplete = Boolean(name.trim() && email.trim() && message.trim());
 
@@ -22,6 +24,7 @@ export default function Contact() {
   <Router></Router>;
 
   const handleSubmit = async () => {
+    setLoading(true);
     try {
       const response = await fetch("https://send-email-0y4a.onrender.com/api/send-contact-email", {
         method: "POST",
@@ -44,6 +47,8 @@ export default function Contact() {
     } catch (error) {
       setAlertStatus("error");
       setTimeout(() => setAlertStatus(null), 2000);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -97,16 +102,32 @@ export default function Contact() {
               <Button
                 bgColor={"midnightGreen"}
                 colorScheme={isFormComplete ? "blue" : "gray"}
-                disabled={!isFormComplete}
+                disabled={!isFormComplete || loading}
                 onClick={handleSubmit}
               >
-                Submit
+                {loading ? (
+                  <ProgressCircle.Root value={null} size="xs">
+                    <ProgressCircle.Circle>
+                      <ProgressCircle.Track />
+                      <ProgressCircle.Range stroke={"navy"} />
+                    </ProgressCircle.Circle>
+                  </ProgressCircle.Root>
+                ) : (
+                  "Submit"
+                )}
               </Button>
             </Card.Footer>
           </Card.Root>
         </Center>
       </Container>
-
+      {loading && (
+          <Center>
+            <Alert.Root status="info" width="lg" mt={6} animation={`${slideDown} 0.4s ease-out`} opacity={0} animationFillMode="forwards">
+              <Alert.Indicator />
+              <Alert.Title>Thanks so much for your feedback!</Alert.Title>
+            </Alert.Root>
+          </Center>
+        )}
       {alertStatus && (
         <Center>
           <Alert.Root status={alertStatus} width="lg" mt={6} animation={`${slideDown} 0.4s ease-out`}  opacity={0} animationFillMode="forwards">
