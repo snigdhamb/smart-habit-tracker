@@ -83,20 +83,6 @@ const App = () => {
             newStreak += 1;
           } else if (diff > 1) {
             newStreak = 1;
-            
-  // const slideDown = keyframes`
-  //   from { opacity: 0; transform: translateY(10px); }
-  //   to { opacity: 1; transform: translateY(0); }
-  // `;
-  // const slideRight = keyframes`
-  //   from { opacity: 0; transform: translateX(-10px); }
-  //   to { opacity: 1; transform: translateY(0); }
-  // `;
-  // const fadeIn = keyframes`
-  //   from { opacity: 0; }
-  //   to { opacity: 1; }
-  // `;
-
           }
           await updateDoc(userDocRef, {
             displayName: currentUser.displayName || "",
@@ -115,9 +101,6 @@ const App = () => {
           setLoginStreak(1);
           setLoginStreakLoaded(true);
         }
-      }
-      if (isNewUser) {
-        navigate("/onboarding");
       }
     });
     
@@ -333,6 +316,7 @@ const App = () => {
             <Route path="/generate-habits" element={<GenerateHabits />}/>
             <Route path="/about" element={<About />}/>
             <Route path="/contact" element={<Contact />}/>
+            {/* <Route path="/app" element={<App />}/> */}
           </Routes>
       </div>
     </div>

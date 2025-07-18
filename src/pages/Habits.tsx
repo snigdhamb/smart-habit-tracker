@@ -33,7 +33,7 @@ interface Habit {
 
 const Habits = () => {
   const [habitName, setHabitName] = useState("");
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [currHabits, setCurrHabits] = useState<Habit[]>([]);
   const [habitsLoaded, setHabitsLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
@@ -49,9 +49,7 @@ const Habits = () => {
   useEffect(() => {
     if (!user) return;
     const fetchHabits = async () => {
-      // const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
-      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      const snapshot = await getDocs(collection(db, "users", user.uid, "currentHabits"));
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date(todayDate);
@@ -75,7 +73,7 @@ const Habits = () => {
             habitDate.getDate() === todayDate.getDate()
           );
         });
-      setHabits(filtered);
+      setCurrHabits(filtered);
       setHabitsLoaded(true);
     };
     fetchHabits();
@@ -91,9 +89,9 @@ const Habits = () => {
       createdAt: new Date(),
       modifiedAt: new Date(),
     };
-    await setDoc(doc(db, "users", user.uid, "habits", newId), newHabit);
+    await setDoc(doc(db, "users", user.uid, "currentHabits", newId), newHabit);
     setHabitName("");
-    setHabits((prev) => [...prev, { id: newId, ...newHabit }]);
+    setCurrHabits((prev) => [...prev, { id: newId, ...newHabit }]);
   };
 
   const cancelUpdate = async () => {
@@ -104,13 +102,13 @@ const Habits = () => {
 
   const updateHabit = async (id: string) => {
     if (!user || !editText.trim()) return;
-    await updateDoc(doc(db, "users", user.uid, "habits", id), {
+    await updateDoc(doc(db, "users", user.uid, "currentHabits", id), {
       name: editText.trim(),
       modifiedAt: new Date(),
     });
     setEditingId(null);
     setEditText("");
-    const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+    const snapshot = await getDocs(collection(db, "users", user.uid, "currentHabits"));
     const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date(todayDate);
@@ -134,16 +132,16 @@ const Habits = () => {
             habitDate.getDate() === todayDate.getDate()
           );
         });
-      setHabits(filtered);
+      setCurrHabits(filtered);
   };
 
   const deleteHabit = async (id: string) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, "users", user.uid, "habits", id));
+      await deleteDoc(doc(db, "users", user.uid, "currentHabits", id));
       console.log(`Deleted habit with ID: ${id}`);
       // Optionally refresh snapshot to ensure consistency
-      const snapshot = await getDocs(collection(db, "users", user.uid, "habits"));
+      const snapshot = await getDocs(collection(db, "users", user.uid, "currentHabits"));
       const todayDate = new Date();
       todayDate.setHours(0, 0, 0, 0);
       const tomorrow = new Date(todayDate);
@@ -167,12 +165,44 @@ const Habits = () => {
             habitDate.getDate() === todayDate.getDate()
           );
         });
-      setHabits(filtered);
-      // setHabits(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setCurrHabits(filtered);
     } catch (error) {
       console.error("Error deleting habit:", error);
     }
   };
+
+  // const insertFakeData = async () => {
+  //   if (!user) return;
+
+  //   const habitsList = [
+  //     "make my bed",
+  //     "go for a walk",
+  //     "tidy my room",
+  //     "do my skincare",
+  //     "take my vitamins",
+  //   ];
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   for (let i = 1; i < 3; i++) {
+  //     const date = new Date(today);
+  //     date.setDate(today.getDate() - i);
+
+  //     for (const habit of habitsList) {
+  //       const id = `${habit.toLowerCase().replace(/\s+/g, "-")}-${date.getTime()}`;
+  //       const habitDocRef = doc(db, "users", user.uid, "habits", id);
+
+  //       await setDoc(habitDocRef, {
+  //         name: habit,
+  //         complete: Math.random() < 0.6, // 60% chance it's completed
+  //         createdAt: date,
+  //         modifiedAt: date,
+  //       });
+  //     }
+  //   }
+
+  //   alert("✅ Fake habit data seeded!");
+  // };
 
   return (
     <>
@@ -198,7 +228,7 @@ const Habits = () => {
           {!habitsLoaded ? (
               <></>
             ) :
-            habits.length === 0 ? (
+            currHabits.length === 0 ? (
               <Container maxW="2xl">
                 <EmptyState.Root mt={50} animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.1s"}>
                   <EmptyState.Content>
@@ -211,14 +241,6 @@ const Habits = () => {
                         Add some above or utilize our habit generator to support your goals
                       </EmptyState.Description>
                     </VStack>
-                      <Button
-                        onClick={() => navigate("/generate-habits")}
-                        bgColor={"selectiveYellow"}
-                        size={"xs"}
-                        fontSize={15}
-                      >
-                        Generate Habits
-                      </Button>
                   </EmptyState.Content>
                 </EmptyState.Root>
               </Container>
@@ -226,7 +248,7 @@ const Habits = () => {
             <Container maxW="2xl"  >
                 <Container mx="auto">
                 {/* {habits.map((habit) => ( */}
-                <For each={habits}>
+                <For each={currHabits}>
                   {(habit, index) => (
                   <Stack key={habit.id}>
                     {editingId === habit.id ? (
@@ -267,22 +289,25 @@ const Habits = () => {
                 </For>
                 {/* ))} */}
                 </Container>
-
-                <Center>
-                  <Button
-                    onClick={() => navigate("/generate-habits")}
-                    bgColor={"selectiveYellow"}
-                    size={"sm"}
-                    fontSize={15}
-                    mt={20}
-                    animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.3s"}>
-                    Generate habits that align with your goals
-                  </Button>
-                </Center>
               {/* </ul> */}
             </Container>
           )}
-          
+          <Center>
+            <Button
+              onClick={() => navigate("/generate-habits")}
+              bgColor={"selectiveYellow"}
+              size={"sm"}
+              fontSize={15}
+              mt={20}
+              animation={`${slideDown} 0.3s ease-out`}  opacity={0} animationFillMode="forwards" animationDelay={"0.3s"}>
+              Generate habits that align with your goals
+            </Button>
+          </Center>
+          {/* <Center mt={4}>
+            <Button onClick={insertFakeData} bgColor="midnightGreen" size="sm" fontSize={15}>
+              Seed Fake Data
+            </Button>
+          </Center> */}
         </div>
       </Container>
     </>

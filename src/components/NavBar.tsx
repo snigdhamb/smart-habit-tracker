@@ -53,13 +53,13 @@ export const NavBar = () => {
                             <Portal>
                                 <Menu.Positioner>
                                 <Menu.Content>
-                                    <Menu.Item value="settings">
+                                    {/* <Menu.Item value="settings">
                                         <LinkBox>
                                             <LinkOverlay>
                                                 <Link to={'/settings'}>Settings</Link>
                                             </LinkOverlay>
                                         </LinkBox>
-                                    </Menu.Item>
+                                    </Menu.Item> */}
                                         <Menu.Item value="signout">
                                             <SignOutButton />
                                         </Menu.Item>

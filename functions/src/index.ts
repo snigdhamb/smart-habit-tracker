@@ -1,32 +1,35 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * import {onCall} from "firebase-functions/v2/https";
- * import {onDocumentWritten} from "firebase-functions/v2/firestore";
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import * as admin from "firebase-admin";
+admin.initializeApp();
 
-import {setGlobalOptions} from "firebase-functions";
-import {onRequest} from "firebase-functions/https";
-import * as logger from "firebase-functions/logger";
+const db = admin.firestore();
 
-// Start writing functions
-// https://firebase.google.com/docs/functions/typescript
+export const copyCurrentHabitsToHabits = onSchedule(
+  {
+    schedule: "55 23 * * *",
+    timeZone: "America/New_York", // Adjust if needed
+  },
+  async (event) => {
+    const currentHabitsSnapshot = await db.collection("currentHabits").get();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const formattedDate = tomorrow.toISOString().split("T")[0];
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({ maxInstances: 10 });
+    const batch = db.batch();
 
-export const generateHabits = onRequest((request, response) => {
-  logger.info("Hello logs!", {structuredData: true});
-  response.send("Hello from Firebase!");
-});
+    currentHabitsSnapshot.forEach((doc) => {
+      const habitData = doc.data();
+      const newHabitRef = db.collection("habits").doc();
+
+      batch.set(newHabitRef, {
+        ...habitData,
+        dateCreated: formattedDate,
+        completed: false,
+      });
+    });
+
+    await batch.commit();
+    console.log(`Copied ${currentHabitsSnapshot.size} habits to 'habits' for ${formattedDate}`);
+    return;
+  }
+);

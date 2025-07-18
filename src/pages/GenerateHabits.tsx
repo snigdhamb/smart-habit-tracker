@@ -86,19 +86,19 @@ const GenerateHabits: React.FC = () => {
     // Stage loading messages
     timeoutsRef.current.push(setTimeout(() => {
       setLoadingMessage("Building a plan that fits your goals…");
-    }, 2000));
-    timeoutsRef.current.push(setTimeout(() => {
-      setLoadingMessage(null);
     }, 4000));
     timeoutsRef.current.push(setTimeout(() => {
+      setLoadingMessage(null);
+    }, 8000));
+    timeoutsRef.current.push(setTimeout(() => {
       setLoadingMessage("Fine-tuning your habit blueprint…");
-    }, 5000));
+    }, 12000));
     timeoutsRef.current.push(setTimeout(() => {
       setLoadingMessage(null);
-    }, 7000));
+    }, 16000));
     timeoutsRef.current.push(setTimeout(() => {
       setLoadingMessage("Just a moment more…");
-    }, 8000));
+    }, 20000));
     try {
       const response = await fetch('https://habit-generator.onrender.com/generate-habits', {
         method: 'POST',
