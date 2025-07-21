@@ -185,7 +185,7 @@ const Habits = () => {
   //   const today = new Date();
   //   today.setHours(0, 0, 0, 0);
 
-  //   for (let i = 0; i < 7; i++) {
+  //   for (let i = 3; i < 4; i++) {
   //     const date = new Date(today);
   //     date.setDate(today.getDate() - i);
 
